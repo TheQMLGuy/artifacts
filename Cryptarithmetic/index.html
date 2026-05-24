@@ -750,12 +750,6 @@
             if (!/^[A-Z]+$/.test(w)) return null;
         }
 
-        const letterSet = new Set();
-        for (const w of [...operands, result]) {
-            for (const ch of w) letterSet.add(ch);
-        }
-        const letters = [...letterSet].sort();
-
         const leadingLetters = new Set();
         for (const w of [...operands, result]) {
             if (w.length > 1) leadingLetters.add(w[0]);
@@ -777,6 +771,27 @@
         // Handle extra carry column
         if (result.length > Math.max(...operands.map(o => o.length))) {
             // Already included in maxLen since we use result.length
+        }
+
+        // Build letter list in right-to-left order of column appearance
+        const letters = [];
+        const seen = new Set();
+        for (const col of columns) {
+            for (const l of [...col.opLetters, col.resLetter]) {
+                if (l && !seen.has(l)) {
+                    letters.push(l);
+                    seen.add(l);
+                }
+            }
+        }
+        // Fallback for any letters not in columns
+        for (const w of [...operands, result]) {
+            for (const ch of w) {
+                if (!seen.has(ch)) {
+                    letters.push(ch);
+                    seen.add(ch);
+                }
+            }
         }
 
         return { operands, result, letters, leadingLetters, columns, raw: str };
@@ -1668,6 +1683,11 @@
 
         document.getElementById('btnSolve').disabled = STATE.parsed.letters.length > STATE.base;
         document.getElementById('btnInteractive').disabled = STATE.parsed.letters.length > STATE.base;
+        if (STATE.parsed.letters.length <= STATE.base) {
+            document.getElementById('speedControl').style.display = 'flex';
+        } else {
+            document.getElementById('speedControl').style.display = 'none';
+        }
 
         renderEquationDisplay();
         renderMatrix();
@@ -1684,7 +1704,7 @@
         STATE.reasoning = [];
         STATE.liveConstraints = [];
 
-        document.getElementById('speedControl').style.display = 'flex';
+        document.getElementById('speedControl').style.display = 'none';
         document.getElementById('btnSolve').disabled = true;
         document.getElementById('btnInteractive').disabled = true;
 
@@ -1790,6 +1810,7 @@
         STATE.solving = false;
         document.getElementById('btnSolve').disabled = false;
         document.getElementById('btnInteractive').disabled = false;
+        document.getElementById('speedControl').style.display = 'flex';
         renderMatrix();
         renderReasoning();
     }
