@@ -264,6 +264,14 @@
         .eq-cell.hovered-valid .digit-val {
             color: var(--success) !important;
         }
+        .eq-cell.hovered-restricting {
+            border-color: var(--warning) !important;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.4) !important;
+            background: rgba(245, 158, 11, 0.15) !important;
+        }
+        .eq-cell.hovered-restricting .digit-val {
+            color: var(--warning) !important;
+        }
         .eq-cell.hovered-invalid {
             border-color: var(--error) !important;
             box-shadow: 0 0 12px var(--glow-error) !important;
@@ -1686,6 +1694,7 @@
         let hoveredDigit = null;
         let isHoveredInvalid = false;
         let alreadyAssignedLetter = null;
+        const restrictingLetters = new Set();
         
         if (STATE.hoveredCell) {
             hoveredLetter = STATE.hoveredCell.letter;
@@ -1762,6 +1771,24 @@
                     possibleCarries = nextCarries;
                 }
             }
+
+            // Populate restricting letters
+            if (isHoveredInvalid) {
+                if (alreadyAssignedLetter !== null) {
+                    restrictingLetters.add(alreadyAssignedLetter);
+                } else {
+                    // Mathematical columns conflict: collect all assigned letters in violated columns
+                    for (const c of conflictColumns) {
+                        const col = columns[c];
+                        const colLetters = [...col.opLetters.filter(l => l), col.resLetter].filter(l => l);
+                        for (const l of colLetters) {
+                            if (l !== hoveredLetter && l in assignment) {
+                                restrictingLetters.add(l);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         let html = '<h3>Equation Visualization</h3><div class="eq-visual">';
@@ -1783,8 +1810,8 @@
                 let typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
                 if (ch === hoveredLetter) {
                     typeClass += isHoveredInvalid ? ' hovered-invalid' : ' hovered-valid';
-                } else if (ch === alreadyAssignedLetter) {
-                    typeClass += ' hovered-valid';
+                } else if (restrictingLetters.has(ch)) {
+                    typeClass += ' hovered-restricting';
                 } else if (conflictColumns.has(colIdx) && alreadyAssignedLetter === null) {
                     typeClass += ' column-conflict';
                 }
@@ -1818,8 +1845,8 @@
             let typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
             if (ch === hoveredLetter) {
                 typeClass += isHoveredInvalid ? ' hovered-invalid' : ' hovered-valid';
-            } else if (ch === alreadyAssignedLetter) {
-                typeClass += ' hovered-valid';
+            } else if (restrictingLetters.has(ch)) {
+                typeClass += ' hovered-restricting';
             } else if (conflictColumns.has(colIdx) && alreadyAssignedLetter === null) {
                 typeClass += ' column-conflict';
             }
