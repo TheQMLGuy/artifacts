@@ -1619,9 +1619,10 @@
                 if (forcedVal !== null) {
                     if (usedDigits.has(digit)) {
                         backtracks++;
+                        const otherLetter = Object.keys(assignment).find(l => assignment[l] === digit);
                         yield {
                             type: 'prune', letter, digit, depth: idx,
-                            reason: `Deduced value ${digit} is already assigned to another letter.`
+                            reason: `Deduced value ${digit} is already assigned to letter ${otherLetter || 'another letter'}.`
                         };
                         continue;
                     }
@@ -1816,8 +1817,13 @@
                     typeClass += ' column-conflict';
                 }
                 
-                html += `<span class="eq-cell ${isAssigned ? 'assigned' : 'unassigned'} ${typeClass}">`;
-                if (isAssigned) {
+                const isUniquenessConflict = (ch === hoveredLetter && alreadyAssignedLetter !== null);
+                
+                html += `<span class="eq-cell ${isAssigned && !isUniquenessConflict ? 'assigned' : 'unassigned'} ${typeClass}">`;
+                if (isUniquenessConflict) {
+                    html += `<span class="letter">${ch}</span>`;
+                    html += `<span class="digit-val" style="position: absolute; top: 2px; font-size: 0.6rem; line-height: 1; color: var(--error);">${hoveredDigit}</span>`;
+                } else if (isAssigned) {
                     html += `<span class="letter">${ch}</span><span class="digit-val">${assignment[ch]}</span>`;
                 } else {
                     html += `<span class="letter">${ch}</span>`;
@@ -1851,8 +1857,13 @@
                 typeClass += ' column-conflict';
             }
             
-            html += `<span class="eq-cell ${isAssigned ? 'assigned' : 'unassigned'} ${typeClass}">`;
-            if (isAssigned) {
+            const isUniquenessConflict = (ch === hoveredLetter && alreadyAssignedLetter !== null);
+            
+            html += `<span class="eq-cell ${isAssigned && !isUniquenessConflict ? 'assigned' : 'unassigned'} ${typeClass}">`;
+            if (isUniquenessConflict) {
+                html += `<span class="letter">${ch}</span>`;
+                html += `<span class="digit-val" style="position: absolute; top: 2px; font-size: 0.6rem; line-height: 1; color: var(--error);">${hoveredDigit}</span>`;
+            } else if (isAssigned) {
                 html += `<span class="letter">${ch}</span><span class="digit-val">${assignment[ch]}</span>`;
             } else {
                 html += `<span class="letter">${ch}</span>`;
@@ -1952,6 +1963,9 @@
                 if (STATE.solution && STATE.solution[letter] === d) {
                     cls += ' solution';
                     explanation = `🎯 <strong>Solution:</strong> Letter <code>${letter}</code> is assigned to <code>${d}</code>.`;
+                } else if (STATE.hoveredCell && STATE.hoveredCell.isFromPrune && STATE.hoveredCell.letter === letter && STATE.hoveredCell.digit === d) {
+                    cls += ' conflict';
+                    explanation = `🚫 <strong>Pruned:</strong> ${STATE.hoveredCell.explanation}`;
                 } else if (STATE.assignment[letter] === d) {
                     cls += ' assigned';
                     explanation = `✓ <strong>Assigned:</strong> Letter <code>${letter}</code> is assigned to <code>${d}</code> (click to unassign).`;
@@ -2189,6 +2203,11 @@
             if (STATE.solveAbort) break;
             stepCount++;
 
+            // Clear any temporary conflict prune visualization before processing next step
+            if (STATE.hoveredCell && STATE.hoveredCell.isFromPrune) {
+                STATE.hoveredCell = null;
+            }
+
             const now = performance.now();
             const shouldRender = delay > 0 || (now - lastRenderTime > 50);
 
@@ -2207,7 +2226,21 @@
                         type: 'prune',
                         message: `<code>${step.letter}=${step.digit}</code> pruned: ${step.reason}`
                     });
-                    if (shouldRender) renderReasoning();
+                    
+                    // Visualize the prune conflict!
+                    STATE.hoveredCell = {
+                        letter: step.letter,
+                        digit: step.digit,
+                        isInvalid: true,
+                        explanation: `🚫 <strong>Pruned:</strong> ${step.reason}`,
+                        isFromPrune: true
+                    };
+                    
+                    if (shouldRender) {
+                        renderEquationDisplay();
+                        renderMatrix();
+                        renderReasoning();
+                    }
                 }
             } else if (step.type === 'backtrack') {
                 delete STATE.assignment[step.letter];
@@ -2277,6 +2310,9 @@
         }
 
         STATE.solving = false;
+        if (STATE.hoveredCell && STATE.hoveredCell.isFromPrune) {
+            STATE.hoveredCell = null;
+        }
         renderMatrix();
         renderReasoning();
         updateUIControls();
