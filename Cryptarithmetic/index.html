@@ -863,21 +863,26 @@
                 const isCarryUnique = (carryMin === carryMax);
                 const ci = carryMin;
 
-                if (isCarryUnique) {
+                let k_op = col.opLetters.filter(l => l === unknownLetter).length;
+                let k_res = col.resLetter === unknownLetter ? 1 : 0;
+                let coef = k_op - k_res;
+
+                if (isCarryUnique && (coef === 1 || coef === -1)) {
                     // We can directly compute the forced value!
                     let forcedVal;
                     let explanation = '';
-                    if (isResult) {
-                        const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
-                        forcedVal = (opSum + ci) % base;
-                        const opExpr = col.opLetters.map(l => l ? `${l}(${assignment[l]})` : '0').join(' + ');
-                        explanation = `${opExpr}${ci > 0 ? ` + carry(${ci})` : ''} = ${opSum + ci} → ${unknownLetter} must be ${forcedVal}`;
-                    } else {
-                        const resVal = col.resLetter ? assignment[col.resLetter] : 0;
+                    if (coef === 1) {
+                        const resVal = col.resLetter && col.resLetter !== unknownLetter ? assignment[col.resLetter] : 0;
                         const otherOpSum = col.opLetters.reduce((s, l) => s + (l && l !== unknownLetter ? assignment[l] : 0), 0);
                         forcedVal = ((resVal - otherOpSum - ci) % base + base) % base;
                         const otherOpExpr = col.opLetters.map(l => l === unknownLetter ? '?' : l ? `${l}(${assignment[l]})` : '0').filter(x => x !== '?').join(' + ');
-                        explanation = `${col.resLetter}(${resVal}) - (${otherOpExpr}${ci > 0 ? ` + carry(${ci})` : ''}) = ${resVal - otherOpSum - ci} → ${unknownLetter} must be ${forcedVal}`;
+                        explanation = `${col.resLetter ? `${col.resLetter}(${resVal})` : '0'} - (${otherOpExpr}${ci > 0 ? ` + carry(${ci})` : ''}) = ${resVal - otherOpSum - ci} → ${unknownLetter} must be ${forcedVal}`;
+                    } else { // coef === -1
+                        const opSum = col.opLetters.reduce((s, l) => s + (l && l !== unknownLetter ? assignment[l] : 0), 0);
+                        const resVal = col.resLetter && col.resLetter !== unknownLetter ? assignment[col.resLetter] : 0;
+                        forcedVal = ((opSum + ci - resVal) % base + base) % base;
+                        const opExpr = col.opLetters.map(l => l && l !== unknownLetter ? `${l}(${assignment[l]})` : '0').join(' + ');
+                        explanation = `${opExpr}${ci > 0 ? ` + carry(${ci})` : ''}${resVal > 0 ? ` - ${col.resLetter}(${resVal})` : ''} = ${opSum + ci - resVal} → ${unknownLetter} must be ${forcedVal}`;
                     }
 
                     // Add reasons for all other digits
@@ -1177,13 +1182,18 @@
                     // This letter is the only unassigned one in this column!
                     if (carryMin === carryMax) {
                         const ci = carryMin;
-                        if (col.resLetter === letter) {
-                            const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
-                            return (opSum + ci) % base;
-                        } else {
-                            const resVal = col.resLetter ? assignment[col.resLetter] : 0;
+                        let k_op = col.opLetters.filter(l => l === letter).length;
+                        let k_res = col.resLetter === letter ? 1 : 0;
+                        let coef = k_op - k_res;
+
+                        if (coef === 1) {
+                            const resVal = col.resLetter && col.resLetter !== letter ? assignment[col.resLetter] : 0;
                             const otherOpSum = col.opLetters.reduce((s, l) => s + (l && l !== letter ? assignment[l] : 0), 0);
                             return ((resVal - otherOpSum - ci) % base + base) % base;
+                        } else if (coef === -1) {
+                            const opSum = col.opLetters.reduce((s, l) => s + (l && l !== letter ? assignment[l] : 0), 0);
+                            const resVal = col.resLetter && col.resLetter !== letter ? assignment[col.resLetter] : 0;
+                            return ((opSum + ci - resVal) % base + base) % base;
                         }
                     }
                     return null;
