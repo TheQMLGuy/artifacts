@@ -64,192 +64,48 @@
         }
 
         /* ===== SCROLLBAR ===== */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-1); }
 
-        /* ===== APP LAYOUT ===== */
-        /* ===== Desktop Viewport-Height Layout ===== */
-        @media (min-width: 1025px) {
-            body {
-                height: 100vh;
-                overflow: hidden;
-            }
-            .app {
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-                padding: 12px 24px 16px;
-                position: relative;
-                z-index: 1;
-                max-width: 1400px;
-                margin: 0 auto;
-            }
-            header {
-                flex-shrink: 0;
-                text-align: center;
-                margin-bottom: 12px;
-                padding-bottom: 8px;
-                border-bottom: 1px solid var(--border);
-            }
-            header h1 {
-                font-size: 1.8rem;
-                font-weight: 800;
-                letter-spacing: -0.5px;
-                background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                margin-bottom: 2px;
-            }
-            header p {
-                font-size: 0.85rem;
-                color: var(--text-secondary);
-                font-weight: 400;
-            }
-            .input-panel {
-                flex-shrink: 0;
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 12px 20px;
-                margin-bottom: 16px;
-                backdrop-filter: blur(16px);
-            }
-            .main-content {
-                flex: 1;
-                display: grid;
-                grid-template-columns: 1fr 380px;
-                gap: 20px;
-                min-height: 0;
-                margin-bottom: 8px;
-            }
-            .left-panel {
-                display: flex;
-                flex-direction: row;
-                gap: 20px;
-                align-items: stretch;
-                min-height: 0;
-                flex: 1;
-            }
-            .equation-display {
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 16px 20px;
-                backdrop-filter: blur(16px);
-                flex: 1;
-                min-width: 310px;
-                display: flex;
-                flex-direction: column;
-                min-height: 0;
-                overflow-y: auto;
-            }
-            .matrix-panel {
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 16px 20px;
-                backdrop-filter: blur(16px);
-                overflow-x: auto;
-                flex: 1.7;
-                min-width: 440px;
-                display: flex;
-                flex-direction: column;
-                min-height: 0;
-                overflow-y: auto;
-            }
-            .reasoning-panel {
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 16px;
-                backdrop-filter: blur(16px);
-                display: flex;
-                flex-direction: column;
-                min-height: 0;
-                max-height: none;
-                position: static;
-            }
+        /* ===== APP BASE LAYOUT ===== */
+        .app {
+            position: relative; z-index: 1;
+            max-width: 1600px; margin: 0 auto;
+            padding: 16px 20px 32px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+        header p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 400;
         }
 
-        /* ===== Tablet/Mobile/Scroll Fallback ===== */
-        @media (max-width: 1024px) {
-            .app {
-                position: relative; z-index: 1;
-                max-width: 1400px; margin: 0 auto;
-                padding: 16px 20px 32px;
-            }
-            header {
-                text-align: center;
-                margin-bottom: 20px;
-                padding-bottom: 16px;
-                border-bottom: 1px solid var(--border);
-            }
-            header h1 {
-                font-size: 2rem;
-                font-weight: 800;
-                letter-spacing: -0.5px;
-                background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                margin-bottom: 4px;
-            }
-            header p {
-                font-size: 0.9rem;
-                color: var(--text-secondary);
-                font-weight: 400;
-            }
-            .input-panel {
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 16px 20px;
-                margin-bottom: 20px;
-                backdrop-filter: blur(16px);
-            }
-            .main-content {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 20px;
-                align-items: start;
-            }
-            .left-panel {
-                display: flex;
-                flex-direction: column;
-                gap: 20px;
-            }
-            .equation-display {
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 20px;
-                backdrop-filter: blur(16px);
-            }
-            .matrix-panel {
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 20px;
-                backdrop-filter: blur(16px);
-                overflow-x: auto;
-            }
-            .reasoning-panel {
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 20px;
-                backdrop-filter: blur(16px);
-                max-height: 80vh;
-                display: flex;
-                flex-direction: column;
-                position: sticky;
-                top: 20px;
-            }
+        /* ===== INPUT PANEL ===== */
+        .input-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(16px);
         }
-
         .input-row {
             display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
         }
@@ -281,7 +137,6 @@
         .input-group select { cursor: pointer; min-width: 70px; }
 
         .btn-group { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
-
         .btn {
             padding: 8px 14px;
             border: 1px solid var(--border);
@@ -299,7 +154,6 @@
         }
         .btn:hover { background: var(--bg-card-hover); border-color: var(--border-strong); transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
-
         .btn-primary {
             background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
             border-color: var(--accent-2);
@@ -319,7 +173,6 @@
             background: transparent; border-color: var(--error); color: var(--error);
         }
         .btn-danger:hover { background: var(--error-dim); }
-
         .btn.active {
             background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
             border-color: var(--accent-3); color: #fff;
@@ -347,27 +200,17 @@
             background: rgba(99,102,241,0.08);
         }
 
-        /* ===== MAIN CONTENT ===== */
+        /* ===== MAIN GRID CONTENT ===== */
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 420px;
-            gap: 24px;
+            grid-template-columns: 1fr;
+            gap: 20px;
             align-items: start;
         }
-        @media (max-width: 1200px) {
-            .main-content { grid-template-columns: 1fr; }
-        }
-
         .left-panel {
             display: flex;
-            flex-direction: row;
-            gap: 24px;
-            align-items: stretch;
-        }
-        @media (max-width: 1200px) {
-            .left-panel {
-                flex-direction: column;
-            }
+            flex-direction: column;
+            gap: 20px;
         }
 
         /* ===== EQUATION DISPLAY ===== */
@@ -375,10 +218,8 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 24px;
+            padding: 20px;
             backdrop-filter: blur(16px);
-            flex: 1;
-            min-width: 320px;
         }
         .equation-display h3 {
             font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
@@ -414,6 +255,14 @@
         .eq-cell.eq-cell-derived {
             border: 1.5px solid rgba(163,113,247,0.4);
             box-shadow: 0 0 4px rgba(163,113,247,0.15);
+        }
+        .eq-cell.hovered-valid {
+            border-color: var(--accent-1) !important;
+            box-shadow: 0 0 12px var(--glow-accent) !important;
+            background: rgba(99, 102, 241, 0.15) !important;
+        }
+        .eq-cell.hovered-valid .digit-val {
+            color: var(--accent-3) !important;
         }
         .eq-cell.hovered-invalid {
             border-color: var(--error) !important;
@@ -455,6 +304,7 @@
             margin: 4px 0;
             width: 100%;
             border-radius: 1px;
+            align-self: stretch;
         }
         .eq-info {
             margin-top: 16px; padding-top: 14px;
@@ -471,11 +321,8 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 24px;
+            padding: 20px;
             backdrop-filter: blur(16px);
-            overflow-x: auto;
-            flex: 1.8;
-            min-width: 480px;
         }
         .matrix-header-row {
             display: flex; justify-content: space-between; align-items: center;
@@ -503,7 +350,9 @@
             color: var(--success);
             border: 1px solid rgba(16,185,129,0.3);
         }
-
+        .matrix-scroll-container {
+            width: 100%;
+        }
         .matrix-grid {
             display: inline-grid;
             gap: 3px;
@@ -677,8 +526,6 @@
             max-height: 80vh;
             display: flex;
             flex-direction: column;
-            position: sticky;
-            top: 24px;
         }
         .reasoning-panel h3 {
             font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
@@ -689,6 +536,7 @@
             overflow-y: auto;
             flex: 1;
             padding-right: 4px;
+            min-height: 0;
         }
         .reason-entry {
             padding: 8px 12px;
@@ -724,9 +572,7 @@
             100% { opacity: 1; transform: translateX(0); }
         }
 
-        .reason-section {
-            margin-bottom: 12px;
-        }
+        .reason-section { margin-bottom: 12px; }
         .reason-section-title {
             font-size: 0.7rem;
             font-weight: 700;
@@ -812,6 +658,32 @@
         .status-dot.solving { background: var(--warning); animation: pulse 1s infinite; }
         .status-dot.error { background: var(--error); }
 
+        /* ============================================================================
+           MEDIA QUERIES (RESPONSIVE STYLING)
+           ============================================================================ */
+
+        /* ===== Tablet/Mobile/Scroll Fallback ===== */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                align-items: start;
+            }
+            .left-panel {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .reasoning-panel {
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+                position: sticky;
+                top: 20px;
+            }
+        }
+
+        /* ===== Mobile Adjustments ===== */
         @media (max-width: 768px) {
             .app { padding: 16px; }
             header h1 { font-size: 1.6rem; }
@@ -821,9 +693,163 @@
             .input-row .input-group input, .input-row .input-group select { width: 100%; }
             .btn-group { width: 100%; }
             .btn-group .btn { flex: 1; }
-            .main-content { grid-template-columns: 1fr; }
             .reasoning-panel { position: static; max-height: 50vh; }
             :root { --cell-size: 36px; }
+        }
+
+        /* ===== Desktop Viewport-Height Layout (LOCKED SINGLE VIEW) ===== */
+        @media (min-width: 1025px) {
+            :root {
+                --cell-size: 34px;
+            }
+            body {
+                height: 100vh;
+                overflow: hidden;
+            }
+            .app {
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                padding: 12px 24px 16px;
+                position: relative;
+                z-index: 1;
+                max-width: 1600px;
+                margin: 0 auto;
+            }
+            header {
+                flex-shrink: 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid var(--border);
+                text-align: left;
+            }
+            header h1 {
+                font-size: 1.4rem;
+                margin-bottom: 0;
+            }
+            header p {
+                font-size: 0.8rem;
+            }
+            .input-panel {
+                flex-shrink: 0;
+                padding: 8px 16px;
+                margin-bottom: 12px;
+            }
+            .examples-row {
+                margin-top: 4px;
+            }
+            .example-chip {
+                padding: 3px 8px;
+                font-size: 0.68rem;
+            }
+            .speed-control {
+                margin-top: 4px;
+            }
+            .main-content {
+                flex: 1;
+                display: grid;
+                grid-template-columns: 1fr 380px;
+                gap: 16px;
+                min-height: 0;
+                align-items: stretch;
+                margin-bottom: 0px;
+            }
+            .left-panel {
+                flex: 1;
+                display: flex;
+                flex-direction: row;
+                gap: 16px;
+                align-items: stretch;
+                min-height: 0;
+            }
+            .equation-display {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                overflow: hidden;
+                padding: 12px 16px;
+                min-width: 310px;
+            }
+            .eq-visual {
+                flex: 1;
+                overflow-y: auto;
+                min-height: 0;
+                padding: 4px 12px;
+            }
+            .eq-cell {
+                width: 30px;
+                height: 38px;
+                font-size: 0.9rem;
+            }
+            .eq-cell .letter {
+                font-size: 0.6rem;
+            }
+            .eq-cell .digit-val {
+                font-size: 0.95rem;
+            }
+            .eq-cell.unassigned .letter {
+                font-size: 0.95rem;
+            }
+            .eq-operator {
+                width: 24px;
+                font-size: 1rem;
+            }
+            .eq-divider {
+                margin: 2px 0;
+            }
+            .eq-info {
+                margin-top: 8px;
+                padding-top: 8px;
+                flex-shrink: 0;
+            }
+            .matrix-panel {
+                flex: 1.7;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                overflow: hidden;
+                padding: 12px 16px;
+                min-width: 440px;
+            }
+            .matrix-scroll-container {
+                flex: 1;
+                overflow: auto;
+                min-height: 0;
+                margin-bottom: 8px;
+                padding-right: 4px;
+            }
+            .hover-explanation-box {
+                margin-top: 8px;
+                padding: 8px 12px;
+                min-height: 48px;
+                font-size: 0.75rem;
+                flex-shrink: 0;
+            }
+            .status-bar {
+                margin-top: 8px;
+                padding: 6px 12px;
+                font-size: 0.72rem;
+                flex-shrink: 0;
+            }
+            .reasoning-panel {
+                flex-shrink: 0;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                max-height: none;
+                overflow: hidden;
+                position: static;
+                padding: 12px 16px;
+            }
+            .reasoning-scroll {
+                flex: 1;
+                overflow-y: auto;
+                min-height: 0;
+            }
         }
     </style>
 </head>
@@ -1658,26 +1684,57 @@
         // Determine which columns are in conflict under the current assignment
         const conflictColumns = new Set();
         if (hoveredLetter !== null) {
-            let carryVal = 0;
+            let possibleCarries = new Set([0]);
             for (let c = 0; c < columns.length; c++) {
                 const col = columns[c];
                 const colLetters = [...col.opLetters.filter(l => l), col.resLetter].filter(l => l);
                 const uniq = [...new Set(colLetters)];
                 
-                // Check if all variables in this column are now assigned and carry is known
-                if (uniq.every(l => l in assignment) && !isNaN(carryVal)) {
+                if (uniq.every(l => l in assignment)) {
+                    // Fully assigned column: check if a valid carry-in exists
                     const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
                     const resVal = col.resLetter ? assignment[col.resLetter] : 0;
-                    const total = opSum + carryVal;
+                    const nextCarries = new Set();
+                    let hasValidCarryIn = false;
                     
-                    if (total % STATE.base !== resVal) {
-                        conflictColumns.add(c);
-                        carryVal = NaN;
-                    } else {
-                        carryVal = Math.floor(total / STATE.base);
+                    for (const ci of possibleCarries) {
+                        const total = opSum + ci;
+                        if (total % STATE.base === resVal) {
+                            hasValidCarryIn = true;
+                            nextCarries.add(Math.floor(total / STATE.base));
+                        }
                     }
+                    
+                    if (!hasValidCarryIn) {
+                        conflictColumns.add(c);
+                        const maxCarry = Math.floor((col.opLetters.length * (STATE.base - 1) + (col.opLetters.length - 1)) / STATE.base);
+                        for (let co = 0; co <= maxCarry; co++) nextCarries.add(co);
+                    }
+                    possibleCarries = nextCarries;
                 } else {
-                    carryVal = NaN;
+                    // Column has unassigned letters: estimate carry-out range
+                    let minSum = 0;
+                    let maxSum = 0;
+                    for (const l of col.opLetters) {
+                        if (l === null) continue;
+                        if (l in assignment) {
+                            minSum += assignment[l];
+                            maxSum += assignment[l];
+                        } else {
+                            minSum += STATE.parsed.leadingLetters.has(l) ? 1 : 0;
+                            maxSum += STATE.base - 1;
+                        }
+                    }
+                    
+                    const nextCarries = new Set();
+                    for (const ci of possibleCarries) {
+                        const minCO = Math.floor((minSum + ci) / STATE.base);
+                        const maxCO = Math.floor((maxSum + ci) / STATE.base);
+                        for (let co = minCO; co <= maxCO; co++) {
+                            nextCarries.add(co);
+                        }
+                    }
+                    possibleCarries = nextCarries;
                 }
             }
         }
@@ -1700,7 +1757,7 @@
                 
                 let typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
                 if (ch === hoveredLetter) {
-                    typeClass += ' hovered-invalid';
+                    typeClass += isHoveredInvalid ? ' hovered-invalid' : ' hovered-valid';
                 } else if (conflictColumns.has(colIdx)) {
                     typeClass += ' column-conflict';
                 }
@@ -1717,7 +1774,7 @@
         }
 
         // Divider
-        html += `<div class="eq-divider" style="width:${(maxLen + 1) * 38}px"></div>`;
+        html += '<div class="eq-divider"></div>';
 
         // Result
         html += '<div class="eq-row">';
@@ -1733,7 +1790,7 @@
             
             let typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
             if (ch === hoveredLetter) {
-                typeClass += ' hovered-invalid';
+                typeClass += isHoveredInvalid ? ' hovered-invalid' : ' hovered-valid';
             } else if (conflictColumns.has(colIdx)) {
                 typeClass += ' column-conflict';
             }
@@ -1747,8 +1804,9 @@
             html += '</span>';
         }
         html += '</div>';
+        html += '</div>'; // close eq-visual
 
-        // Info bar
+        // Info bar (outside eq-visual to keep it pinned)
         html += '<div class="eq-info">';
         html += `<span class="eq-stat">Letters: <span>${letters.length}</span></span>`;
         html += `<span class="eq-stat">Base: <span>${STATE.base}</span></span>`;
@@ -1757,7 +1815,6 @@
         html += `<span class="eq-stat">Assigned: <span>${assignedCount}/${letters.length}</span></span>`;
         html += '</div>';
 
-        html += '</div>';
         container.innerHTML = html;
     }
 
@@ -1791,6 +1848,7 @@
             ${mode ? `<span class="mode-badge ${mode}">${mode === 'interactive' ? '🖐 Interactive' : '⚡ Auto Solve'}</span>` : ''}
         </div>`;
 
+        html += `<div class="matrix-scroll-container">`;
         html += `<div class="matrix-grid" style="grid-template-columns: 48px repeat(${base}, var(--cell-size));">`;
 
         // Column headers
@@ -1867,7 +1925,7 @@
             }
         }
 
-        html += '</div>';
+        html += '</div></div>'; // close matrix-grid and matrix-scroll-container
 
         // Hover explanation box below the grid
         html += `<div class="hover-explanation-box" id="hoverExplanationBox">
