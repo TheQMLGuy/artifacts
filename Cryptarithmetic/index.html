@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptarithmetic Solver</title>
+    <meta name="description" content="Interactive cryptarithmetic puzzle solver with constraint propagation, animated solving, and step-by-step reasoning.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #06081a;
+            --bg-primary: #0c1029;
+            --bg-secondary: #131837;
+            --bg-card: rgba(19, 24, 55, 0.85);
+            --bg-card-hover: rgba(26, 33, 72, 0.9);
+            --accent-1: #6366f1;
+            --accent-2: #8b5cf6;
+            --accent-3: #a78bfa;
+            --success: #10b981;
+            --success-dim: rgba(16, 185, 129, 0.15);
+            --error: #f43f5e;
+            --error-dim: rgba(244, 63, 94, 0.12);
+            --warning: #f59e0b;
+            --warning-dim: rgba(245, 158, 11, 0.12);
+            --info: #38bdf8;
+            --info-dim: rgba(56, 189, 248, 0.12);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #475569;
+            --border: rgba(99, 102, 241, 0.15);
+            --border-strong: rgba(99, 102, 241, 0.35);
+            --glow-accent: rgba(99, 102, 241, 0.4);
+            --glow-success: rgba(16, 185, 129, 0.4);
+            --glow-error: rgba(244, 63, 94, 0.3);
+            --cell-size: 44px;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-xs: 6px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== ANIMATED BACKGROUND ===== */
+        .bg-gradient {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,102,241,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 80%, rgba(139,92,246,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 50% 50%, rgba(56,189,248,0.04) 0%, transparent 60%);
+            animation: bgShift 20s ease-in-out infinite alternate;
+        }
+        @keyframes bgShift {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-1); }
+
+        /* ===== APP LAYOUT ===== */
+        .app {
+            position: relative; z-index: 1;
+            max-width: 1400px; margin: 0 auto;
+            padding: 24px 28px 40px;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        header p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* ===== INPUT PANEL ===== */
+        .input-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(16px);
+        }
+        .input-row {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-group label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+        .input-group input, .input-group select {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-group input:focus, .input-group select:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px var(--glow-accent);
+        }
+        .input-group input.eq-input { width: 380px; letter-spacing: 1px; }
+        .input-group select { cursor: pointer; min-width: 70px; }
+
+        .btn-group { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+
+        .btn {
+            padding: 10px 18px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover { background: var(--bg-card-hover); border-color: var(--border-strong); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border-color: var(--accent-2);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 4px 20px var(--glow-accent);
+            border-color: var(--accent-3);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #059669, var(--success));
+            border-color: var(--success);
+            color: #fff;
+        }
+        .btn-success:hover { box-shadow: 0 4px 20px var(--glow-success); }
+        .btn-danger {
+            background: transparent; border-color: var(--error); color: var(--error);
+        }
+        .btn-danger:hover { background: var(--error-dim); }
+
+        .btn.active {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border-color: var(--accent-3); color: #fff;
+            box-shadow: 0 0 12px var(--glow-accent);
+        }
+
+        .examples-row {
+            display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px;
+        }
+        .example-chip {
+            padding: 5px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .example-chip:hover {
+            border-color: var(--accent-1);
+            color: var(--accent-3);
+            background: rgba(99,102,241,0.08);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 1100px) {
+            .main-content { grid-template-columns: 1fr; }
+        }
+
+        .left-panel { display: flex; flex-direction: column; gap: 24px; }
+
+        /* ===== EQUATION DISPLAY ===== */
+        .equation-display {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            backdrop-filter: blur(16px);
+        }
+        .equation-display h3 {
+            font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 16px;
+        }
+        .eq-visual {
+            display: flex; flex-direction: column; align-items: flex-end;
+            font-family: 'JetBrains Mono', monospace; gap: 4px;
+            padding: 0 24px;
+        }
+        .eq-row {
+            display: flex; align-items: center; gap: 0;
+        }
+        .eq-operator {
+            width: 32px; text-align: center;
+            font-weight: 700; font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+        .eq-cell {
+            width: 36px; height: 44px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 600;
+            border-radius: 4px; margin: 1px;
+            transition: all 0.25s;
+            position: relative;
+        }
+        .eq-cell .letter {
+            font-size: 0.65rem; color: var(--text-muted);
+            position: absolute; top: 2px;
+            transition: color 0.25s;
+        }
+        .eq-cell .digit-val {
+            font-size: 1.1rem; font-weight: 700;
+            color: var(--accent-3);
+        }
+        .eq-cell.assigned {
+            background: rgba(99,102,241,0.1);
+        }
+        .eq-cell.unassigned .letter {
+            font-size: 1.1rem; position: static;
+            color: var(--text-primary); font-weight: 600;
+        }
+        .eq-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-1), var(--accent-2), transparent);
+            margin: 4px 0;
+            width: 100%;
+            border-radius: 1px;
+        }
+        .eq-info {
+            margin-top: 16px; padding-top: 14px;
+            border-top: 1px solid var(--border);
+            display: flex; gap: 16px; flex-wrap: wrap;
+        }
+        .eq-stat {
+            font-size: 0.78rem; color: var(--text-secondary);
+        }
+        .eq-stat span { color: var(--accent-3); font-weight: 600; }
+
+        /* ===== MATRIX ===== */
+        .matrix-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            overflow-x: auto;
+        }
+        .matrix-header-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .matrix-panel h3 {
+            font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary);
+        }
+        .mode-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .mode-badge.interactive {
+            background: var(--info-dim);
+            color: var(--info);
+            border: 1px solid rgba(56,189,248,0.3);
+        }
+        .mode-badge.auto {
+            background: var(--success-dim);
+            color: var(--success);
+            border: 1px solid rgba(16,185,129,0.3);
+        }
+
+        .matrix-grid {
+            display: inline-grid;
+            gap: 3px;
+            margin: 0 auto;
+        }
+        .matrix-corner {
+            width: 48px; height: var(--cell-size);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; color: var(--text-muted);
+        }
+        .matrix-col-header {
+            width: var(--cell-size); height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem; font-weight: 600;
+            color: var(--accent-3);
+            border-bottom: 2px solid var(--border);
+        }
+        .matrix-row-header {
+            width: 48px; height: var(--cell-size);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem; font-weight: 700;
+            color: var(--text-primary);
+            border-right: 2px solid var(--border);
+            position: relative;
+        }
+        .matrix-row-header.leading::after {
+            content: '★';
+            position: absolute; right: 4px; top: 2px;
+            font-size: 0.5rem; color: var(--warning);
+        }
+        .matrix-cell {
+            width: var(--cell-size); height: var(--cell-size);
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .matrix-cell:hover:not(.disabled):not(.solution) {
+            border-color: var(--accent-1);
+            background: rgba(99,102,241,0.08);
+            transform: scale(1.08);
+            z-index: 2;
+            box-shadow: 0 0 12px var(--glow-accent);
+        }
+        .matrix-cell.assigned {
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+            border-color: var(--accent-2);
+            color: var(--accent-3);
+            box-shadow: 0 0 8px var(--glow-accent);
+        }
+        .matrix-cell.assigned::after {
+            content: '✓';
+            font-size: 1rem;
+            color: var(--accent-3);
+        }
+        .matrix-cell.solution {
+            background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.15));
+            border-color: var(--success);
+            color: var(--success);
+            box-shadow: 0 0 8px var(--glow-success);
+            cursor: default;
+            animation: solutionPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .matrix-cell.solution::after {
+            content: '✓';
+            font-size: 1rem;
+            color: var(--success);
+        }
+        .matrix-cell.disabled {
+            background: rgba(244,63,94,0.04);
+            border-color: rgba(244,63,94,0.1);
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+        .matrix-cell.disabled::after {
+            content: '✗';
+            font-size: 0.75rem;
+            color: var(--error);
+            opacity: 0.6;
+        }
+        .matrix-cell.conflict {
+            background: var(--error-dim);
+            border-color: var(--error);
+            animation: shake 0.4s ease;
+        }
+        .matrix-cell.trying {
+            background: rgba(245,158,11,0.15);
+            border-color: var(--warning);
+            box-shadow: 0 0 12px rgba(245,158,11,0.3);
+            animation: pulse 0.6s ease-in-out infinite;
+        }
+        .matrix-cell.trying::after {
+            content: '?';
+            color: var(--warning);
+            font-size: 0.9rem;
+        }
+
+        /* tooltip */
+        .matrix-cell[data-tooltip]:hover::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-xs);
+            font-size: 0.68rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        @keyframes solutionPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(245,158,11,0.2); }
+            50% { box-shadow: 0 0 16px rgba(245,158,11,0.5); }
+        }
+
+        /* ===== REASONING PANEL ===== */
+        .reasoning-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            backdrop-filter: blur(16px);
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 24px;
+        }
+        .reasoning-panel h3 {
+            font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+        .reasoning-scroll {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 4px;
+        }
+        .reason-entry {
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border-left: 3px solid var(--border);
+            border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            transition: all 0.25s;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        .reason-entry.analysis { border-left-color: var(--info); background: var(--info-dim); }
+        .reason-entry.deduction { border-left-color: var(--success); background: var(--success-dim); }
+        .reason-entry.elimination { border-left-color: var(--warning); background: var(--warning-dim); }
+        .reason-entry.conflict { border-left-color: var(--error); background: var(--error-dim); }
+        .reason-entry.assignment { border-left-color: var(--accent-1); background: rgba(99,102,241,0.08); }
+        .reason-entry.search { border-left-color: var(--accent-2); background: rgba(139,92,246,0.06); }
+        .reason-entry.solution { border-left-color: var(--success); background: var(--success-dim); }
+        .reason-entry .icon { margin-right: 6px; }
+        .reason-entry strong { color: var(--text-primary); font-weight: 600; }
+        .reason-entry code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            background: rgba(0,0,0,0.3);
+            padding: 1px 5px;
+            border-radius: 3px;
+            color: var(--accent-3);
+        }
+
+        @keyframes fadeSlideIn {
+            0% { opacity: 0; transform: translateX(-8px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .reason-section {
+            margin-bottom: 12px;
+        }
+        .reason-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .verification-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            padding: 12px 16px;
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            white-space: pre;
+            color: var(--text-primary);
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+        }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+        .empty-state p { font-size: 0.88rem; line-height: 1.6; }
+
+        /* ===== SPEED CONTROL ===== */
+        .speed-control {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 8px;
+        }
+        .speed-control label {
+            font-size: 0.72rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--text-secondary);
+        }
+        .speed-control input[type="range"] {
+            -webkit-appearance: none;
+            width: 100px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none;
+        }
+        .speed-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: var(--accent-1);
+            cursor: pointer;
+            box-shadow: 0 0 6px var(--glow-accent);
+        }
+        .speed-label {
+            font-size: 0.72rem; color: var(--accent-3);
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 48px;
+        }
+
+        /* ===== STATUS BAR ===== */
+        .status-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+        .status-dot.ready { background: var(--success); box-shadow: 0 0 6px var(--glow-success); }
+        .status-dot.solving { background: var(--warning); animation: pulse 1s infinite; }
+        .status-dot.error { background: var(--error); }
+
+        @media (max-width: 768px) {
+            .app { padding: 16px; }
+            header h1 { font-size: 1.6rem; }
+            .input-group input.eq-input { width: 100%; }
+            .input-row { flex-direction: column; align-items: stretch; }
+            .input-row .input-group { width: 100%; }
+            .input-row .input-group input, .input-row .input-group select { width: 100%; }
+            .btn-group { width: 100%; }
+            .btn-group .btn { flex: 1; }
+            .main-content { grid-template-columns: 1fr; }
+            .reasoning-panel { position: static; max-height: 50vh; }
+            :root { --cell-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="app">
+        <header>
+            <h1>✦ Cryptarithmetic Solver</h1>
+            <p>Solve, explore, and understand letter-to-digit substitution puzzles</p>
+        </header>
+
+        <section class="input-panel">
+            <div class="input-row">
+                <div class="input-group" style="flex:1">
+                    <label>Equation</label>
+                    <input type="text" id="equationInput" class="eq-input" placeholder="SEND + MORE = MONEY" spellcheck="false" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>Base</label>
+                    <select id="baseSelect"></select>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="btnParse" onclick="handleParse()">Parse</button>
+                    <button class="btn btn-success" id="btnSolve" onclick="handleSolve()" disabled>⚡ Auto Solve</button>
+                    <button class="btn" id="btnInteractive" onclick="handleInteractive()" disabled>🖐 Interactive</button>
+                    <button class="btn btn-danger" id="btnReset" onclick="handleReset()">Reset</button>
+                </div>
+            </div>
+            <div class="examples-row">
+                <span style="font-size:0.72rem;color:var(--text-muted);padding:5px 0;">Examples:</span>
+                <span class="example-chip" onclick="loadExample('SEND + MORE = MONEY')">SEND+MORE=MONEY</span>
+                <span class="example-chip" onclick="loadExample('ROBERT + GERALD = DONALD')">ROBERT+GERALD=DONALD</span>
+                <span class="example-chip" onclick="loadExample('TWO + TWO = FOUR')">TWO+TWO=FOUR</span>
+                <span class="example-chip" onclick="loadExample('BASE + BALL = GAMES')">BASE+BALL=GAMES</span>
+                <span class="example-chip" onclick="loadExample('CROSS + ROADS = DANGER')">CROSS+ROADS=DANGER</span>
+                <span class="example-chip" onclick="loadExample('AB + CD = EFG')">AB+CD=EFG (small)</span>
+            </div>
+            <div class="speed-control" id="speedControl" style="display:none">
+                <label>Solve Speed</label>
+                <input type="range" id="speedSlider" min="0" max="4" value="2" oninput="updateSpeedLabel()">
+                <span class="speed-label" id="speedLabel">200ms</span>
+            </div>
+        </section>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <section class="equation-display" id="equationDisplay" style="display:none"></section>
+                <section class="matrix-panel" id="matrixPanel" style="display:none"></section>
+            </div>
+            <section class="reasoning-panel" id="reasoningPanel">
+                <h3>📋 Reasoning</h3>
+                <div class="reasoning-scroll" id="reasoningScroll">
+                    <div class="empty-state">
+                        <div class="icon">🧩</div>
+                        <p>Enter an equation and click <strong>Parse</strong> to begin.<br>
+                        The solver will show step-by-step reasoning here.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+    // ============================================================================
+    //  STATE
+    // ============================================================================
+    const STATE = {
+        equation: '',
+        parsed: null,       // { operands, result, letters, leadingLetters, columns }
+        base: 10,
+        mode: null,         // 'auto' | 'interactive'
+        assignment: {},     // letter -> digit
+        solution: null,     // letter -> digit (from auto-solve)
+        reasoning: [],      // [{ type, message, details }] — append-only action log
+        liveConstraints: [], // [{ type, message }] — recomputed each click (interactive mode)
+        constraints: {},    // letter -> Set<digit> (valid digits)
+        disabledReasons: {},// `letter-digit` -> reason string
+        solving: false,
+        solveAbort: false,
+    };
+
+    const SPEEDS = [500, 200, 80, 20, 0];
+    const SPEED_LABELS = ['500ms', '200ms', '80ms', '20ms', 'Instant'];
+
+    // ============================================================================
+    //  INIT
+    // ============================================================================
+    function init() {
+        const sel = document.getElementById('baseSelect');
+        for (let b = 2; b <= 16; b++) {
+            const opt = document.createElement('option');
+            opt.value = b;
+            opt.textContent = `Base ${b}`;
+            if (b === 10) opt.selected = true;
+            sel.appendChild(opt);
+        }
+        sel.addEventListener('change', () => {
+            STATE.base = parseInt(sel.value);
+            if (STATE.parsed) handleParse();
+        });
+
+        document.getElementById('equationInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleParse();
+        });
+
+        updateSpeedLabel();
+    }
+
+    // ============================================================================
+    //  PARSER
+    // ============================================================================
+    function parseEquation(str) {
+        str = str.toUpperCase().replace(/\s+/g, '');
+        const eqParts = str.split('=');
+        if (eqParts.length !== 2) return null;
+
+        const operands = eqParts[0].split('+').filter(s => s.length > 0);
+        const result = eqParts[1].trim();
+
+        if (operands.length === 0 || result.length === 0) return null;
+        for (const w of [...operands, result]) {
+            if (!/^[A-Z]+$/.test(w)) return null;
+        }
+
+        const letterSet = new Set();
+        for (const w of [...operands, result]) {
+            for (const ch of w) letterSet.add(ch);
+        }
+        const letters = [...letterSet].sort();
+
+        const leadingLetters = new Set();
+        for (const w of [...operands, result]) {
+            if (w.length > 1) leadingLetters.add(w[0]);
+        }
+
+        // Build column representation (right to left)
+        const maxLen = Math.max(result.length, ...operands.map(o => o.length));
+        const columns = [];
+        for (let i = 0; i < maxLen; i++) {
+            const opLetters = operands.map(op => {
+                const idx = op.length - 1 - i;
+                return idx >= 0 ? op[idx] : null;
+            });
+            const resIdx = result.length - 1 - i;
+            const resLetter = resIdx >= 0 ? result[resIdx] : null;
+            columns.push({ opLetters, resLetter, index: i });
+        }
+        // If result is longer than operands, the leftmost columns might just be carry
+        // Handle extra carry column
+        if (result.length > Math.max(...operands.map(o => o.length))) {
+            // Already included in maxLen since we use result.length
+        }
+
+        return { operands, result, letters, leadingLetters, columns, raw: str };
+    }
+
+    // ============================================================================
+    //  COLUMN CONSTRAINTS (for interactive reasoning)
+    // ============================================================================
+    function computeConstraints(parsed, base, assignment) {
+        const validDigits = {};
+        const reasons = [];
+        const columnAnalysis = [];
+        const assignedDigits = new Set(Object.values(assignment));
+
+        // Init all unassigned letters with full domain
+        for (const letter of parsed.letters) {
+            if (letter in assignment) continue;
+            validDigits[letter] = new Set();
+            for (let d = 0; d < base; d++) validDigits[letter].add(d);
+        }
+
+        // 1. Uniqueness: assigned digits not available for others
+        for (const letter of parsed.letters) {
+            if (letter in assignment) continue;
+            for (const [aL, aD] of Object.entries(assignment)) {
+                if (validDigits[letter].has(aD)) {
+                    validDigits[letter].delete(aD);
+                    reasons.push({
+                        letter, digit: aD, type: 'elimination',
+                        reason: `Digit ${aD} is already assigned to ${aL}`
+                    });
+                }
+            }
+        }
+
+        // 2. Leading zeros
+        for (const letter of parsed.letters) {
+            if (letter in assignment) continue;
+            if (parsed.leadingLetters.has(letter) && validDigits[letter] && validDigits[letter].has(0)) {
+                validDigits[letter].delete(0);
+                const words = [...parsed.operands, parsed.result].filter(w => w.length > 1 && w[0] === letter);
+                reasons.push({
+                    letter, digit: 0, type: 'elimination',
+                    reason: `${letter} is the leading letter of ${words.join(', ')} — cannot be 0`
+                });
+            }
+        }
+
+        // 3. Column arithmetic constraints
+        let carryMin = 0, carryMax = 0; // carry into current column
+        for (let c = 0; c < parsed.columns.length; c++) {
+            const col = parsed.columns[c];
+            const colLettersRaw = [...col.opLetters.filter(l => l !== null)];
+            if (col.resLetter) colLettersRaw.push(col.resLetter);
+            const uniqueColLetters = [...new Set(colLettersRaw)];
+            const unassignedInCol = uniqueColLetters.filter(l => !(l in assignment));
+
+            // Build column expression string
+            const opStr = col.opLetters.map(l => l || '0').join(' + ');
+            const resStr = col.resLetter || '0';
+            let colStatus = '';
+
+            if (unassignedInCol.length === 0) {
+                // Fully assigned column — verify
+                const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
+                const resVal = col.resLetter ? assignment[col.resLetter] : 0;
+
+                let newCarryMin = Infinity, newCarryMax = -Infinity;
+                let valid = false;
+                for (let ci = carryMin; ci <= carryMax; ci++) {
+                    const total = opSum + ci;
+                    if (total % base === resVal) {
+                        const co = Math.floor(total / base);
+                        newCarryMin = Math.min(newCarryMin, co);
+                        newCarryMax = Math.max(newCarryMax, co);
+                        valid = true;
+                    }
+                }
+                if (valid) {
+                    carryMin = newCarryMin;
+                    carryMax = newCarryMax;
+                    colStatus = `✓ Verified: ${opStr} + carry(${carryMin === carryMax ? carryMin : carryMin+'-'+carryMax}) = ${resStr} (mod ${base})`;
+                } else {
+                    colStatus = `✗ CONFLICT: ${opStr} + carry ≠ ${resStr} (mod ${base})`;
+                    reasons.push({ type: 'conflict', column: c, reason: colStatus });
+                }
+            } else if (unassignedInCol.length === 1) {
+                // One unknown — try to constrain
+                const unknownLetter = unassignedInCol[0];
+                const isInOperands = col.opLetters.includes(unknownLetter);
+                const isResult = col.resLetter === unknownLetter;
+
+                // Check if carry-in is uniquely determined
+                const isCarryUnique = (carryMin === carryMax);
+                const ci = carryMin;
+
+                if (isCarryUnique) {
+                    // We can directly compute the forced value!
+                    let forcedVal;
+                    let explanation = '';
+                    if (isResult) {
+                        const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
+                        forcedVal = (opSum + ci) % base;
+                        const opExpr = col.opLetters.map(l => l ? `${l}(${assignment[l]})` : '0').join(' + ');
+                        explanation = `${opExpr}${ci > 0 ? ` + carry(${ci})` : ''} = ${opSum + ci} → ${unknownLetter} must be ${forcedVal}`;
+                    } else {
+                        const resVal = col.resLetter ? assignment[col.resLetter] : 0;
+                        const otherOpSum = col.opLetters.reduce((s, l) => s + (l && l !== unknownLetter ? assignment[l] : 0), 0);
+                        forcedVal = ((resVal - otherOpSum - ci) % base + base) % base;
+                        const otherOpExpr = col.opLetters.map(l => l === unknownLetter ? '?' : l ? `${l}(${assignment[l]})` : '0').filter(x => x !== '?').join(' + ');
+                        explanation = `${col.resLetter}(${resVal}) - (${otherOpExpr}${ci > 0 ? ` + carry(${ci})` : ''}) = ${resVal - otherOpSum - ci} → ${unknownLetter} must be ${forcedVal}`;
+                    }
+
+                    // Add reasons for all other digits
+                    for (let d = 0; d < base; d++) {
+                        if (d === forcedVal) continue;
+                        if (validDigits[unknownLetter]) {
+                            validDigits[unknownLetter].delete(d);
+                            reasons.push({
+                                letter: unknownLetter,
+                                digit: d,
+                                type: 'elimination',
+                                isForcedElimination: true, // Mark so we can filter it out of the live log
+                                reason: `Column ${c}: ${explanation}`
+                            });
+                        }
+                    }
+
+                    colStatus = `⚡ Forces ${unknownLetter} = ${forcedVal} via Column ${c}: ${explanation}`;
+                } else {
+                    // Carry is not unique, do the loop-based check
+                    const toRemove = new Set();
+                    for (let d = 0; d < base; d++) {
+                        if (!validDigits[unknownLetter] || !validDigits[unknownLetter].has(d)) continue;
+
+                        let foundValid = false;
+                        for (let ciVal = carryMin; ciVal <= carryMax; ciVal++) {
+                            let opSum = 0;
+                            for (const l of col.opLetters) {
+                                if (l === null) continue;
+                                opSum += (l === unknownLetter) ? d : assignment[l];
+                            }
+                            const total = opSum + ciVal;
+                            const resVal = (col.resLetter === unknownLetter) ? d : (col.resLetter ? assignment[col.resLetter] : 0);
+                            if (total % base === resVal) {
+                                foundValid = true;
+                                break;
+                            }
+                        }
+                        if (!foundValid) toRemove.add(d);
+                    }
+
+                    for (const d of toRemove) {
+                        if (validDigits[unknownLetter]) {
+                            validDigits[unknownLetter].delete(d);
+                            reasons.push({
+                                letter: unknownLetter, digit: d, type: 'elimination',
+                                reason: `Column ${c}: no valid carry makes ${unknownLetter}=${d} work in ${opStr} + carry = ${resStr}`
+                            });
+                        }
+                    }
+                    colStatus = `⏳ One unknown: ${unknownLetter} in column ${c}`;
+                }
+
+                // Compute carry range
+                const minD = validDigits[unknownLetter] ? Math.min(...validDigits[unknownLetter]) : 0;
+                const maxD = validDigits[unknownLetter] ? Math.max(...validDigits[unknownLetter]) : base - 1;
+                let allOpMin = 0, allOpMax = 0;
+                for (const l of col.opLetters) {
+                    if (l === null) continue;
+                    if (l in assignment) { allOpMin += assignment[l]; allOpMax += assignment[l]; }
+                    else if (l === unknownLetter) { allOpMin += minD; allOpMax += maxD; }
+                    else { allOpMax += base - 1; }
+                }
+                let totalMin = allOpMin + carryMin, totalMax = allOpMax + carryMax;
+                carryMin = Math.max(0, Math.floor(totalMin / base));
+                carryMax = Math.floor(totalMax / base);
+            } else {
+                // Multiple unknowns — just compute carry range
+                let allOpMin = 0, allOpMax = 0;
+                for (const l of col.opLetters) {
+                    if (l === null) continue;
+                    if (l in assignment) { allOpMin += assignment[l]; allOpMax += assignment[l]; }
+                    else { allOpMax += base - 1; }
+                }
+                let totalMin = allOpMin + carryMin, totalMax = allOpMax + carryMax;
+                carryMin = Math.max(0, Math.floor(totalMin / base));
+                carryMax = Math.floor(totalMax / base);
+
+                colStatus = `… ${unassignedInCol.length} unknowns in column ${c}`;
+            }
+
+            columnAnalysis.push({ column: c, expression: `${opStr} + carry = ${resStr} (base ${base})`, status: colStatus });
+        }
+
+        // Check for naked singles (letters with only one valid digit)
+        const insights = [];
+        for (const letter of parsed.letters) {
+            if (letter in assignment) continue;
+            if (validDigits[letter] && validDigits[letter].size === 1) {
+                const d = [...validDigits[letter]][0];
+                const forcedReason = reasons.find(r => r.letter === letter && r.isForcedElimination);
+                const explanation = forcedReason ? ` (${forcedReason.reason})` : '';
+                insights.push({ letter, digit: d, reason: `${letter} must be ${d}${explanation}` });
+            } else if (validDigits[letter] && validDigits[letter].size === 0) {
+                insights.push({ letter, digit: null, reason: `${letter} has no valid digits — conflict!`, conflict: true });
+            }
+        }
+
+        return { validDigits, reasons, columnAnalysis, insights };
+    }
+
+    // ============================================================================
+    //  SOLVER (generator-based for animation)
+    // ============================================================================
+    function* solveCryptarithmetic(parsed, base) {
+        const { letters, leadingLetters, columns, operands, result } = parsed;
+
+        if (letters.length > base) {
+            yield { type: 'error', message: `Too many unique letters (${letters.length}) for base ${base} (max ${base} digits available).` };
+            return;
+        }
+
+        // ── PHASE 1: Setup & Letter Ordering ──
+        const ordered = [];
+        const seen = new Set();
+        for (const col of columns) {
+            for (const l of [...col.opLetters, col.resLetter]) {
+                if (l && !seen.has(l)) { ordered.push(l); seen.add(l); }
+            }
+        }
+        for (const l of letters) {
+            if (!seen.has(l)) { ordered.push(l); seen.add(l); }
+        }
+
+        yield {
+            type: 'analysis',
+            message: `<strong>Phase 1 — Problem Setup</strong>`,
+            details: `Equation: ${operands.join(' + ')} = ${result}\nUnique letters: ${letters.join(', ')} (${letters.length})\nBase: ${base} (digits 0–${base - 1})\nLeading letters (≠ 0): ${[...leadingLetters].join(', ') || 'none'}`
+        };
+
+        yield {
+            type: 'analysis',
+            message: `Solving order (column-first, right→left): <code>${ordered.join(' → ')}</code>`,
+            details: `We process letters in the order they first appear reading columns from right to left.\nThis lets us verify column arithmetic as early as possible, pruning bad guesses quickly.`
+        };
+
+        // ── PHASE 2: Column Constraint Equations ──
+        yield { type: 'analysis', message: `<strong>Phase 2 — Column Constraints</strong>` };
+
+        const colDescs = [];
+        for (let c = 0; c < columns.length; c++) {
+            const col = columns[c];
+            const opStr = col.opLetters.map(l => l || '0').join(' + ');
+            const resStr = col.resLetter || '0';
+            const ciLabel = c === 0 ? '0' : `c<sub>${c}</sub>`;
+            const coLabel = `c<sub>${c + 1}</sub>`;
+            const posName = c === 0 ? 'ones' : c === 1 ? 'tens' : c === 2 ? 'hundreds' : c === 3 ? 'thousands' : `10^${c}`;
+            const desc = `Column ${c} (${posName}): <code>${opStr} + ${ciLabel} = ${resStr} + ${base}·${coLabel}</code>`;
+            colDescs.push(desc);
+            yield { type: 'column', message: desc };
+        }
+
+        // ── PHASE 3: Pre-Solve Logical Deductions ──
+        yield { type: 'analysis', message: `<strong>Phase 3 — Logical Deductions (before search)</strong>` };
+
+        let deductionCount = 0;
+        const maxOpLen = Math.max(...operands.map(o => o.length));
+
+        // Deduction: Leading letters
+        for (const l of leadingLetters) {
+            const words = [...operands, result].filter(w => w.length > 1 && w[0] === l);
+            yield {
+                type: 'deduction',
+                message: `<code>${l} ≠ 0</code> — ${l} is the leading letter of <strong>${words.join(', ')}</strong>. Numbers cannot start with 0.`
+            };
+            deductionCount++;
+        }
+
+        // Deduction: Result longer than all operands → leftmost digit is carry
+        if (result.length > maxOpLen) {
+            const leadChar = result[0];
+            const nOps = operands.length;
+            const maxCarry = Math.floor((nOps * (base - 1) + (nOps - 1)) / base);
+            yield {
+                type: 'deduction',
+                message: `The result <strong>${result}</strong> (${result.length} digits) is longer than all operands (max ${maxOpLen} digits).`
+            };
+            yield {
+                type: 'deduction',
+                message: `The leftmost digit <code>${leadChar}</code> must equal the carry from column ${columns.length - 2}. With ${nOps} operands in base ${base}, the maximum possible carry is <strong>${maxCarry}</strong>.`
+            };
+            if (maxCarry === 1) {
+                yield {
+                    type: 'deduction',
+                    message: `Since the max carry is 1 and <code>${leadChar} ≠ 0</code> (leading), we can <strong>deduce ${leadChar} = 1</strong>.`
+                };
+            } else if (maxCarry > 1) {
+                const possibleVals = [];
+                for (let v = 1; v <= maxCarry; v++) possibleVals.push(v);
+                yield {
+                    type: 'deduction',
+                    message: `So <code>${leadChar} ∈ {${possibleVals.join(', ')}}</code>.`
+                };
+            }
+            deductionCount++;
+        }
+
+        // Deduction: Same letter in operand and result at same column
+        for (let c = 0; c < columns.length; c++) {
+            const col = columns[c];
+            if (col.resLetter && col.opLetters.includes(col.resLetter)) {
+                const others = col.opLetters.filter(l => l !== null && l !== col.resLetter);
+                if (others.length > 0 && c === 0) {
+                    yield {
+                        type: 'deduction',
+                        message: `Column ${c}: <code>${col.resLetter}</code> appears on both sides. Since carry-in is 0, the other operand digit(s) <code>${others.join(', ')}</code> must sum to a multiple of ${base} (i.e., 0 or ${base}).`
+                    };
+                    deductionCount++;
+                }
+            }
+        }
+
+        if (deductionCount === 0) {
+            yield { type: 'analysis', message: `No immediate logical deductions available. Proceeding to search.` };
+        }
+
+        // ── PHASE 4: Backtracking Search ──
+        yield { type: 'analysis', message: `<strong>Phase 4 — Backtracking Search</strong>` };
+        yield {
+            type: 'analysis',
+            message: `Strategy: Try each digit for each letter in order. After each assignment, verify all fully-determined columns. If any column's arithmetic is violated, prune that branch immediately.`
+        };
+
+        const assignment = {};
+        const usedDigits = new Set();
+        let attempts = 0;
+        let backtracks = 0;
+        let found = false;
+
+        // Returns { valid, failColumn, failDetail } for detailed pruning info
+        function checkPartialDetailed() {
+            let carry = 0;
+            for (let c = 0; c < columns.length; c++) {
+                const col = columns[c];
+                const allLetters = [...col.opLetters.filter(l => l), col.resLetter].filter(l => l);
+                const uniq = [...new Set(allLetters)];
+                if (!uniq.every(l => l in assignment)) break;
+
+                const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
+                const total = opSum + carry;
+                const resVal = col.resLetter ? assignment[col.resLetter] : 0;
+                const computedDigit = total % base;
+                const computedCarry = Math.floor(total / base);
+
+                if (computedDigit !== resVal) {
+                    // Build readable arithmetic
+                    const opParts = col.opLetters.map(l => l ? `${l}(${assignment[l]})` : '0');
+                    const sumExpr = opParts.join(' + ') + (carry > 0 ? ` + carry(${carry})` : '');
+                    return {
+                        valid: false,
+                        failColumn: c,
+                        failDetail: `${sumExpr} = ${total} → digit = ${total} mod ${base} = <strong>${computedDigit}</strong>, but ${col.resLetter}=${resVal}. Expected <strong>${resVal}</strong> ≠ <strong>${computedDigit}</strong>.`
+                    };
+                }
+                carry = computedCarry;
+            }
+            return { valid: true };
+        }
+
+        function verify() {
+            function wordValue(word) {
+                let val = 0;
+                for (const ch of word) val = val * base + assignment[ch];
+                return val;
+            }
+            return operands.reduce((s, w) => s + wordValue(w), 0) === wordValue(result);
+        }
+
+        // Helper to find if a letter's value is uniquely determined by column constraints
+        function getForcedValue(letter) {
+            let carryMin = 0;
+            let carryMax = 0;
+            for (let c = 0; c < columns.length; c++) {
+                const col = columns[c];
+                const colLetters = [...col.opLetters.filter(l => l), col.resLetter].filter(l => l);
+                const uniqueColLetters = [...new Set(colLetters)];
+                const unassigned = uniqueColLetters.filter(l => !(l in assignment));
+
+                if (unassigned.length === 0) {
+                    // Fully assigned column: compute carry-out range
+                    const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
+                    const resVal = col.resLetter ? assignment[col.resLetter] : 0;
+                    let nextCarryMin = Infinity, nextCarryMax = -Infinity;
+                    for (let ci = carryMin; ci <= carryMax; ci++) {
+                        if ((opSum + ci) % base === resVal) {
+                            const co = Math.floor((opSum + ci) / base);
+                            nextCarryMin = Math.min(nextCarryMin, co);
+                            nextCarryMax = Math.max(nextCarryMax, co);
+                        }
+                    }
+                    if (nextCarryMin === Infinity) {
+                        return null; // conflict
+                    }
+                    carryMin = nextCarryMin;
+                    carryMax = nextCarryMax;
+                } else if (unassigned.length === 1 && unassigned[0] === letter) {
+                    // This letter is the only unassigned one in this column!
+                    if (carryMin === carryMax) {
+                        const ci = carryMin;
+                        if (col.resLetter === letter) {
+                            const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
+                            return (opSum + ci) % base;
+                        } else {
+                            const resVal = col.resLetter ? assignment[col.resLetter] : 0;
+                            const otherOpSum = col.opLetters.reduce((s, l) => s + (l && l !== letter ? assignment[l] : 0), 0);
+                            return ((resVal - otherOpSum - ci) % base + base) % base;
+                        }
+                    }
+                    return null;
+                } else {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        function* backtrack(idx) {
+            if (found) return;
+            if (idx === ordered.length) {
+                if (verify()) {
+                    found = true;
+                    yield { type: 'solution', assignment: { ...assignment } };
+                }
+                return;
+            }
+
+            const letter = ordered[idx];
+            const forcedVal = getForcedValue(letter);
+
+            const digitsToTry = (forcedVal !== null) ? [forcedVal] : Array.from({ length: base }, (_, i) => i);
+
+            for (const digit of digitsToTry) {
+                if (found) return;
+                
+                if (forcedVal !== null) {
+                    if (usedDigits.has(digit)) {
+                        backtracks++;
+                        yield {
+                            type: 'prune', letter, digit, depth: idx,
+                            reason: `Deduced value ${digit} is already assigned to another letter.`
+                        };
+                        continue;
+                    }
+                    if (digit === 0 && leadingLetters.has(letter)) {
+                        backtracks++;
+                        yield {
+                            type: 'prune', letter, digit, depth: idx,
+                            reason: `Deduced value 0 is invalid since ${letter} is a leading letter.`
+                        };
+                        continue;
+                    }
+                    
+                    yield {
+                        type: 'analysis',
+                        message: `💡 <strong>Deduction:</strong> Column constraints force <code>${letter} = ${digit}</code>.`
+                    };
+                } else {
+                    if (usedDigits.has(digit)) continue;
+                    if (digit === 0 && leadingLetters.has(letter)) continue;
+                }
+
+                attempts++;
+                assignment[letter] = digit;
+                usedDigits.add(digit);
+
+                yield { type: 'try', letter, digit, depth: idx };
+
+                const check = checkPartialDetailed();
+                if (check.valid) {
+                    yield* backtrack(idx + 1);
+                } else {
+                    backtracks++;
+                    yield {
+                        type: 'prune', letter, digit, depth: idx,
+                        reason: `Column ${check.failColumn} violated: ${check.failDetail}`
+                    };
+                }
+
+                if (!found) {
+                    delete assignment[letter];
+                    usedDigits.delete(digit);
+                    yield { type: 'backtrack', letter, digit, depth: idx };
+                }
+            }
+        }
+
+        yield* backtrack(0);
+
+        if (!found) {
+            yield { type: 'error', message: `No solution exists. Exhausted all ${attempts} assignments with ${backtracks} pruned branches.` };
+        } else {
+            yield { type: 'stats', message: `Search complete: tested ${attempts} assignments, pruned ${backtracks} branches.` };
+        }
+    }
+
+    // ============================================================================
+    //  UI RENDERING
+    // ============================================================================
+    function renderEquationDisplay() {
+        const container = document.getElementById('equationDisplay');
+        if (!STATE.parsed) { container.style.display = 'none'; return; }
+        container.style.display = '';
+
+        const { operands, result, letters, leadingLetters } = STATE.parsed;
+        const assignment = STATE.solution || STATE.assignment;
+        const maxLen = Math.max(result.length, ...operands.map(o => o.length));
+
+        let html = '<h3>Equation Visualization</h3><div class="eq-visual">';
+
+        // Operands
+        for (let i = 0; i < operands.length; i++) {
+            const word = operands[i];
+            const pad = maxLen - word.length;
+            html += '<div class="eq-row">';
+            html += `<span class="eq-operator">${i === 0 ? '' : '+'}</span>`;
+            for (let p = 0; p < pad; p++) html += '<span class="eq-cell" style="visibility:hidden"></span>';
+            for (const ch of word) {
+                const isAssigned = ch in assignment;
+                html += `<span class="eq-cell ${isAssigned ? 'assigned' : 'unassigned'}">`;
+                if (isAssigned) {
+                    html += `<span class="letter">${ch}</span><span class="digit-val">${assignment[ch]}</span>`;
+                } else {
+                    html += `<span class="letter">${ch}</span>`;
+                }
+                html += '</span>';
+            }
+            html += '</div>';
+        }
+
+        // Divider
+        html += `<div class="eq-divider" style="width:${(maxLen + 1) * 38}px"></div>`;
+
+        // Result
+        html += '<div class="eq-row">';
+        html += '<span class="eq-operator">=</span>';
+        const resPad = maxLen - result.length;
+        for (let p = 0; p < resPad; p++) html += '<span class="eq-cell" style="visibility:hidden"></span>';
+        for (const ch of result) {
+            const isAssigned = ch in assignment;
+            html += `<span class="eq-cell ${isAssigned ? 'assigned' : 'unassigned'}">`;
+            if (isAssigned) {
+                html += `<span class="letter">${ch}</span><span class="digit-val">${assignment[ch]}</span>`;
+            } else {
+                html += `<span class="letter">${ch}</span>`;
+            }
+            html += '</span>';
+        }
+        html += '</div>';
+
+        // Info bar
+        html += '<div class="eq-info">';
+        html += `<span class="eq-stat">Letters: <span>${letters.length}</span></span>`;
+        html += `<span class="eq-stat">Base: <span>${STATE.base}</span></span>`;
+        html += `<span class="eq-stat">Leading: <span>${[...leadingLetters].join(', ') || '—'}</span></span>`;
+        const assigned = Object.keys(assignment).length;
+        html += `<span class="eq-stat">Assigned: <span>${assigned}/${letters.length}</span></span>`;
+        html += '</div>';
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function renderMatrix() {
+        const panel = document.getElementById('matrixPanel');
+        if (!STATE.parsed) { panel.style.display = 'none'; return; }
+        panel.style.display = '';
+
+        const { letters, leadingLetters } = STATE.parsed;
+        const base = STATE.base;
+        const assignment = STATE.solution || STATE.assignment;
+        const mode = STATE.mode;
+
+        // Compute constraints for interactive mode
+        let constraints = null;
+        let disabledMap = {};
+        if (mode === 'interactive' && !STATE.solution) {
+            constraints = computeConstraints(STATE.parsed, base, STATE.assignment);
+            // Build disabled map
+            for (const r of constraints.reasons) {
+                if (r.letter && r.digit !== undefined && r.digit !== null) {
+                    const key = `${r.letter}-${r.digit}`;
+                    if (!disabledMap[key]) disabledMap[key] = r.reason;
+                }
+            }
+        }
+
+        const cols = base + 1; // +1 for row header
+        let html = `<div class="matrix-header-row">
+            <h3>Assignment Matrix</h3>
+            ${mode ? `<span class="mode-badge ${mode}">${mode === 'interactive' ? '🖐 Interactive' : '⚡ Auto Solve'}</span>` : ''}
+        </div>`;
+
+        html += `<div class="matrix-grid" style="grid-template-columns: 48px repeat(${base}, var(--cell-size));">`;
+
+        // Column headers
+        html += '<div class="matrix-corner"></div>';
+        for (let d = 0; d < base; d++) {
+            html += `<div class="matrix-col-header">${d}</div>`;
+        }
+
+        // Rows
+        for (const letter of letters) {
+            // Row header
+            const isLeading = leadingLetters.has(letter);
+            html += `<div class="matrix-row-header${isLeading ? ' leading' : ''}">${letter}</div>`;
+
+            for (let d = 0; d < base; d++) {
+                const key = `${letter}-${d}`;
+                let cls = 'matrix-cell';
+                let tooltip = '';
+                let clickable = false;
+
+                if (STATE.solution && STATE.solution[letter] === d) {
+                    cls += ' solution';
+                    tooltip = `Solution: ${letter} = ${d}`;
+                } else if (STATE.assignment[letter] === d) {
+                    cls += ' assigned';
+                    tooltip = `Assigned: ${letter} = ${d} (click to unassign)`;
+                    clickable = mode === 'interactive';
+                } else if (letter in assignment) {
+                    cls += ' disabled';
+                    tooltip = `${letter} is already assigned to ${assignment[letter]}`;
+                } else if (disabledMap[key]) {
+                    cls += ' disabled';
+                    tooltip = disabledMap[key];
+                } else if (mode === 'interactive' && constraints && constraints.validDigits[letter] && !constraints.validDigits[letter].has(d)) {
+                    cls += ' disabled';
+                    tooltip = 'Eliminated by constraints';
+                } else {
+                    clickable = mode === 'interactive' && !STATE.solution;
+                }
+
+                html += `<div class="${cls}" ${tooltip ? `data-tooltip="${escHtml(tooltip)}"` : ''} ${clickable ? `onclick="handleCellClick('${letter}',${d})"` : ''}></div>`;
+            }
+        }
+
+        html += '</div>';
+
+        // Status bar
+        let statusDot = 'ready', statusText = 'Ready';
+        if (STATE.solving) { statusDot = 'solving'; statusText = 'Solving...'; }
+        if (STATE.solution) { statusDot = 'ready'; statusText = 'Solution found ✓'; }
+        if (mode === 'interactive') {
+            const n = Object.keys(STATE.assignment).length;
+            statusText = `Interactive — ${n}/${letters.length} assigned`;
+            if (constraints) {
+                const conflicts = constraints.insights.filter(i => i.conflict);
+                if (conflicts.length > 0) { statusDot = 'error'; statusText += ' ⚠ Conflict detected'; }
+                const forced = constraints.insights.filter(i => !i.conflict && i.digit !== null);
+                if (forced.length > 0) statusText += ` · ${forced.length} forced`;
+            }
+        }
+        html += `<div class="status-bar"><span class="status-dot ${statusDot}"></span>${statusText}</div>`;
+
+        panel.innerHTML = html;
+    }
+
+    function renderReasoning() {
+        const scroll = document.getElementById('reasoningScroll');
+        if (STATE.reasoning.length === 0 && !STATE.mode) {
+            scroll.innerHTML = `<div class="empty-state"><div class="icon">🧩</div><p>Enter an equation and click <strong>Parse</strong> to begin.<br>The solver will show step-by-step reasoning here.</p></div>`;
+            return;
+        }
+
+        function renderEntry(entry) {
+            const icon = {
+                analysis: '📝', deduction: '💡', elimination: '🚫',
+                conflict: '❌', assignment: '🔒', unassignment: '🔓',
+                search: '🔍', solution: '✅', error: '⚠️',
+                stats: '📊', prune: '✂️', backtrack: '↩️',
+                try: '▶️', insight: '💡', column: '📐',
+                verification: '✓'
+            }[entry.type] || '•';
+
+            let h = `<div class="reason-entry ${entry.type}">`;
+            h += `<span class="icon">${icon}</span>`;
+            h += entry.message;
+            if (entry.details) {
+                h += `<div style="margin-top:4px;font-size:0.72rem;opacity:0.8;white-space:pre-wrap">${escHtml(entry.details)}</div>`;
+            }
+            if (entry.verification) {
+                h += `<div class="verification-block">${escHtml(entry.verification)}</div>`;
+            }
+            h += '</div>';
+            return h;
+        }
+
+        let html = '';
+
+        // Action log entries
+        for (const entry of STATE.reasoning) {
+            html += renderEntry(entry);
+        }
+
+        // Live constraint analysis (interactive mode)
+        if (STATE.liveConstraints && STATE.liveConstraints.length > 0) {
+            html += '<div class="reason-section-title" style="margin-top:16px;">Current Constraint Analysis</div>';
+            for (const entry of STATE.liveConstraints) {
+                html += renderEntry(entry);
+            }
+        }
+
+        scroll.innerHTML = html;
+        scroll.scrollTop = scroll.scrollHeight;
+    }
+
+    // ============================================================================
+    //  EVENT HANDLERS
+    // ============================================================================
+    function loadExample(eq) {
+        document.getElementById('equationInput').value = eq;
+        handleParse();
+    }
+
+    function handleParse() {
+        const input = document.getElementById('equationInput').value.trim();
+        if (!input) return;
+
+        STATE.base = parseInt(document.getElementById('baseSelect').value);
+        STATE.parsed = parseEquation(input);
+        STATE.equation = input;
+        STATE.assignment = {};
+        STATE.solution = null;
+        STATE.mode = null;
+        STATE.solving = false;
+        STATE.solveAbort = true;
+        STATE.reasoning = [];
+        STATE.liveConstraints = [];
+
+        if (!STATE.parsed) {
+            STATE.reasoning.push({
+                type: 'error',
+                message: `<strong>Invalid equation format.</strong> Use format like <code>SEND + MORE = MONEY</code>`
+            });
+            renderReasoning();
+            return;
+        }
+
+        if (STATE.parsed.letters.length > STATE.base) {
+            STATE.reasoning.push({
+                type: 'error',
+                message: `<strong>Too many unique letters!</strong> ${STATE.parsed.letters.length} letters need at least base ${STATE.parsed.letters.length}, but base ${STATE.base} selected.`
+            });
+            STATE.reasoning.push({
+                type: 'analysis',
+                message: `Letters: <code>${STATE.parsed.letters.join(', ')}</code> (${STATE.parsed.letters.length} unique)`
+            });
+        } else {
+            STATE.reasoning.push({
+                type: 'analysis',
+                message: `<strong>Parsed:</strong> ${STATE.parsed.operands.join(' + ')} = ${STATE.parsed.result}`
+            });
+            STATE.reasoning.push({
+                type: 'analysis',
+                message: `Unique letters: <code>${STATE.parsed.letters.join(', ')}</code> (${STATE.parsed.letters.length})`
+            });
+            STATE.reasoning.push({
+                type: 'analysis',
+                message: `Leading letters (≠ 0): <code>${[...STATE.parsed.leadingLetters].join(', ') || 'none'}</code>`
+            });
+            STATE.reasoning.push({
+                type: 'analysis',
+                message: `Base: <strong>${STATE.base}</strong> → digits 0 to ${STATE.base - 1}`
+            });
+
+            // Show column constraints
+            for (let c = 0; c < STATE.parsed.columns.length; c++) {
+                const col = STATE.parsed.columns[c];
+                const opStr = col.opLetters.map(l => l || '0').join(' + ');
+                const resStr = col.resLetter || '0';
+                const ci = c === 0 ? '0' : `c${c}`;
+                STATE.reasoning.push({
+                    type: 'column',
+                    message: `Column ${c}: <code>${opStr} + ${ci} ≡ ${resStr} (mod ${STATE.base})</code>`
+                });
+            }
+        }
+
+        document.getElementById('btnSolve').disabled = STATE.parsed.letters.length > STATE.base;
+        document.getElementById('btnInteractive').disabled = STATE.parsed.letters.length > STATE.base;
+
+        renderEquationDisplay();
+        renderMatrix();
+        renderReasoning();
+    }
+
+    async function handleSolve() {
+        if (!STATE.parsed || STATE.solving) return;
+        STATE.mode = 'auto';
+        STATE.solution = null;
+        STATE.assignment = {};
+        STATE.solving = true;
+        STATE.solveAbort = false;
+        STATE.reasoning = [];
+        STATE.liveConstraints = [];
+
+        document.getElementById('speedControl').style.display = 'flex';
+        document.getElementById('btnSolve').disabled = true;
+        document.getElementById('btnInteractive').disabled = true;
+
+        const speedIdx = parseInt(document.getElementById('speedSlider').value);
+        const delay = SPEEDS[speedIdx];
+
+        const gen = solveCryptarithmetic(STATE.parsed, STATE.base);
+        let stepCount = 0;
+        const maxDisplayedTries = 400; // limit rendering for fast speeds
+        let lastRenderTime = 0;
+
+        for (const step of gen) {
+            if (STATE.solveAbort) break;
+            stepCount++;
+
+            const now = performance.now();
+            const shouldRender = delay > 0 || (now - lastRenderTime > 50);
+
+            if (step.type === 'analysis') {
+                STATE.reasoning.push({ type: 'analysis', message: step.message, details: step.details });
+                if (shouldRender) renderReasoning();
+            } else if (step.type === 'try') {
+                STATE.assignment[step.letter] = step.digit;
+                if (shouldRender && delay > 0) {
+                    renderEquationDisplay();
+                    renderMatrix();
+                }
+            } else if (step.type === 'prune') {
+                if (delay >= 80) {
+                    STATE.reasoning.push({
+                        type: 'prune',
+                        message: `<code>${step.letter}=${step.digit}</code> pruned: ${step.reason}`
+                    });
+                    if (shouldRender) renderReasoning();
+                }
+            } else if (step.type === 'backtrack') {
+                delete STATE.assignment[step.letter];
+                if (shouldRender && delay > 0) {
+                    renderEquationDisplay();
+                    renderMatrix();
+                }
+            } else if (step.type === 'solution') {
+                STATE.solution = { ...step.assignment };
+                STATE.assignment = {};
+
+                STATE.reasoning.push({
+                    type: 'solution',
+                    message: `<strong>Solution found!</strong>`
+                });
+
+                // Show mapping
+                const mapping = Object.entries(STATE.solution)
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(([l, d]) => `${l}=${d}`).join(', ');
+                STATE.reasoning.push({
+                    type: 'solution',
+                    message: `Mapping: <code>${mapping}</code>`
+                });
+
+                // Verification
+                function wordValueSol(word) {
+                    let val = 0;
+                    for (const ch of word) val = val * STATE.base + STATE.solution[ch];
+                    return val;
+                }
+                const opVals = STATE.parsed.operands.map(w => wordValueSol(w));
+                const resVal = wordValueSol(STATE.parsed.result);
+                const maxWordLen = Math.max(STATE.parsed.result.length, ...STATE.parsed.operands.map(o => o.length));
+
+                let verif = '';
+                for (let i = 0; i < STATE.parsed.operands.length; i++) {
+                    const prefix = i === 0 ? '  ' : '+ ';
+                    verif += prefix + String(opVals[i]).padStart(maxWordLen + 2) + '\n';
+                }
+                verif += '  ' + '─'.repeat(maxWordLen + 2) + '\n';
+                verif += '  ' + String(resVal).padStart(maxWordLen + 2);
+                const sumOps = opVals.reduce((a, b) => a + b, 0);
+                verif += sumOps === resVal ? '  ✓' : '  ✗ MISMATCH!';
+
+                STATE.reasoning.push({
+                    type: 'verification',
+                    message: '<strong>Verification:</strong>',
+                    verification: verif
+                });
+
+                renderEquationDisplay();
+                renderMatrix();
+                renderReasoning();
+            } else if (step.type === 'error') {
+                STATE.reasoning.push({ type: 'error', message: step.message });
+                renderReasoning();
+            } else if (step.type === 'stats') {
+                STATE.reasoning.push({ type: 'stats', message: step.message });
+                renderReasoning();
+            }
+
+            if (delay > 0 && shouldRender) {
+                lastRenderTime = performance.now();
+                await sleep(delay);
+            }
+        }
+
+        STATE.solving = false;
+        document.getElementById('btnSolve').disabled = false;
+        document.getElementById('btnInteractive').disabled = false;
+        renderMatrix();
+        renderReasoning();
+    }
+
+    function handleInteractive() {
+        if (!STATE.parsed) return;
+        STATE.mode = 'interactive';
+        STATE.solution = null;
+        STATE.assignment = {};
+        STATE.solving = false;
+        STATE.solveAbort = true;
+        STATE.reasoning = [];
+        STATE.liveConstraints = [];
+
+        document.getElementById('speedControl').style.display = 'none';
+        document.getElementById('btnInteractive').classList.add('active');
+        document.getElementById('btnSolve').classList.remove('active');
+
+        STATE.reasoning.push({
+            type: 'analysis',
+            message: '<strong>Interactive Mode</strong> — Click cells to assign digits to letters.'
+        });
+        STATE.reasoning.push({
+            type: 'analysis',
+            message: `Leading letters (★): <code>${[...STATE.parsed.leadingLetters].join(', ') || 'none'}</code> — cannot be 0`
+        });
+
+        updateInteractiveReasoning();
+        renderEquationDisplay();
+        renderMatrix();
+        renderReasoning();
+    }
+
+    function handleCellClick(letter, digit) {
+        if (STATE.mode !== 'interactive' || STATE.solution) return;
+
+        if (STATE.assignment[letter] === digit) {
+            // Unassign
+            delete STATE.assignment[letter];
+            STATE.reasoning.push({
+                type: 'unassignment',
+                message: `<strong>Unassigned</strong> <code>${letter}</code> (was ${digit})`
+            });
+        } else if (letter in STATE.assignment) {
+            // Re-assign
+            const old = STATE.assignment[letter];
+            STATE.assignment[letter] = digit;
+            STATE.reasoning.push({
+                type: 'assignment',
+                message: `<strong>Reassigned</strong> <code>${letter} = ${digit}</code> (was ${old})`
+            });
+        } else {
+            // New assignment
+            STATE.assignment[letter] = digit;
+            STATE.reasoning.push({
+                type: 'assignment',
+                message: `<strong>Assigned</strong> <code>${letter} = ${digit}</code>`
+            });
+        }
+
+        updateInteractiveReasoning();
+        renderEquationDisplay();
+        renderMatrix();
+        renderReasoning();
+
+        // Check if puzzle is complete
+        if (Object.keys(STATE.assignment).length === STATE.parsed.letters.length) {
+            checkInteractiveSolution();
+        }
+    }
+
+    function updateInteractiveReasoning() {
+        if (!STATE.parsed || STATE.mode !== 'interactive') return;
+
+        const constraints = computeConstraints(STATE.parsed, STATE.base, STATE.assignment);
+
+        // Rebuild liveConstraints from scratch each time
+        const live = [];
+
+        // Show column analysis
+        if (Object.keys(STATE.assignment).length > 0) {
+            for (const ca of constraints.columnAnalysis) {
+                if (ca.status.startsWith('✓') || ca.status.startsWith('✗')) {
+                    live.push({
+                        type: ca.status.startsWith('✗') ? 'conflict' : 'deduction',
+                        message: `<strong>Column ${ca.column}:</strong> ${ca.status}`
+                    });
+                }
+            }
+        }
+
+        // Show insights (forced values, conflicts)
+        for (const ins of constraints.insights) {
+            if (ins.conflict) {
+                live.push({ type: 'conflict', message: `<strong>Conflict:</strong> ${ins.reason}` });
+            } else {
+                live.push({ type: 'deduction', message: `<strong>Forced:</strong> ${ins.reason}` });
+            }
+        }
+
+        // Group eliminations by letter for a cleaner display
+        const elimByLetter = {};
+        for (const r of constraints.reasons) {
+            if (r.letter) {
+                if (r.isForcedElimination) continue;
+                if (!elimByLetter[r.letter]) elimByLetter[r.letter] = [];
+                elimByLetter[r.letter].push(r);
+            }
+        }
+
+        for (const [letter, elims] of Object.entries(elimByLetter)) {
+            if (elims.length <= 3) {
+                for (const e of elims) {
+                    live.push({ type: 'elimination', message: `<code>${letter} ≠ ${e.digit}</code>: ${e.reason}` });
+                }
+            } else {
+                const digits = elims.map(e => e.digit).join(', ');
+                live.push({ type: 'elimination', message: `<code>${letter}</code> cannot be {${digits}} — eliminated by constraints` });
+            }
+        }
+
+        // Show remaining valid digits for each unassigned letter
+        const unassigned = STATE.parsed.letters.filter(l => !(l in STATE.assignment));
+        if (unassigned.length > 0 && unassigned.length < STATE.parsed.letters.length) {
+            const domainLines = unassigned.map(l => {
+                const valid = constraints.validDigits[l];
+                if (!valid || valid.size === 0) return `<code>${l}</code>: <strong style="color:var(--error)">∅ (no options)</strong>`;
+                return `<code>${l}</code>: {${[...valid].sort((a,b)=>a-b).join(', ')}}`;
+            });
+            live.push({
+                type: 'analysis',
+                message: `<strong>Remaining domains:</strong><br>${domainLines.join('<br>')}`
+            });
+        }
+
+        STATE.liveConstraints = live;
+    }
+
+    function checkInteractiveSolution() {
+        if (!STATE.parsed) return;
+        const { operands, result } = STATE.parsed;
+        const base = STATE.base;
+        const assignment = STATE.assignment;
+
+        function wordValue(word) {
+            let val = 0;
+            for (const ch of word) val = val * base + assignment[ch];
+            return val;
+        }
+
+        const opSum = operands.reduce((s, w) => s + wordValue(w), 0);
+        const resVal = wordValue(result);
+
+        if (opSum === resVal) {
+            STATE.solution = { ...assignment };
+            STATE.reasoning.push({
+                type: 'solution',
+                message: '<strong>🎉 Correct! You solved the puzzle!</strong>'
+            });
+
+            const maxWordLen = Math.max(result.length, ...operands.map(o => o.length));
+            const opVals = operands.map(w => wordValue(w));
+            let verif = '';
+            for (let i = 0; i < operands.length; i++) {
+                const prefix = i === 0 ? '  ' : '+ ';
+                verif += prefix + String(opVals[i]).padStart(maxWordLen + 2) + '\n';
+            }
+            verif += '  ' + '─'.repeat(maxWordLen + 2) + '\n';
+            verif += '  ' + String(resVal).padStart(maxWordLen + 2) + '  ✓';
+
+            STATE.reasoning.push({
+                type: 'verification',
+                message: '<strong>Verification:</strong>',
+                verification: verif
+            });
+
+            renderEquationDisplay();
+            renderMatrix();
+            renderReasoning();
+        } else {
+            STATE.reasoning.push({
+                type: 'conflict',
+                message: `<strong>Incorrect:</strong> ${operands.map(w => wordValue(w)).join(' + ')} = ${opSum} ≠ ${resVal}`
+            });
+            renderReasoning();
+        }
+    }
+
+    function handleReset() {
+        STATE.solveAbort = true;
+        STATE.parsed = null;
+        STATE.assignment = {};
+        STATE.solution = null;
+        STATE.mode = null;
+        STATE.solving = false;
+        STATE.reasoning = [];
+        STATE.liveConstraints = [];
+
+        document.getElementById('equationDisplay').style.display = 'none';
+        document.getElementById('matrixPanel').style.display = 'none';
+        document.getElementById('speedControl').style.display = 'none';
+        document.getElementById('btnSolve').disabled = true;
+        document.getElementById('btnInteractive').disabled = true;
+        document.getElementById('btnInteractive').classList.remove('active');
+        document.getElementById('btnSolve').classList.remove('active');
+
+        renderReasoning();
+    }
+
+    function updateSpeedLabel() {
+        const idx = parseInt(document.getElementById('speedSlider').value);
+        document.getElementById('speedLabel').textContent = SPEED_LABELS[idx];
+    }
+
+    // ============================================================================
+    //  UTILITIES
+    // ============================================================================
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ============================================================================
+    //  BOOT
+    // ============================================================================
+    init();
+    </script>
+</body>
+</html>
