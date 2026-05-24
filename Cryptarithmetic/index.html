@@ -257,12 +257,12 @@
             box-shadow: 0 0 4px rgba(163,113,247,0.15);
         }
         .eq-cell.hovered-valid {
-            border-color: var(--accent-1) !important;
-            box-shadow: 0 0 12px var(--glow-accent) !important;
-            background: rgba(99, 102, 241, 0.15) !important;
+            border-color: var(--success) !important;
+            box-shadow: 0 0 12px var(--glow-success) !important;
+            background: rgba(16, 185, 129, 0.15) !important;
         }
         .eq-cell.hovered-valid .digit-val {
-            color: var(--accent-3) !important;
+            color: var(--success) !important;
         }
         .eq-cell.hovered-invalid {
             border-color: var(--error) !important;
@@ -1671,11 +1671,22 @@
         let hoveredLetter = null;
         let hoveredDigit = null;
         let isHoveredInvalid = false;
+        let alreadyAssignedLetter = null;
         
         if (STATE.hoveredCell) {
             hoveredLetter = STATE.hoveredCell.letter;
             hoveredDigit = STATE.hoveredCell.digit;
             isHoveredInvalid = STATE.hoveredCell.isInvalid;
+            
+            // Find if this digit is already assigned to another letter
+            const currentAssignments = STATE.solution || STATE.assignment;
+            for (const [l, d] of Object.entries(currentAssignments)) {
+                if (l !== hoveredLetter && d === hoveredDigit) {
+                    alreadyAssignedLetter = l;
+                    break;
+                }
+            }
+            
             assignment[hoveredLetter] = hoveredDigit;
         }
 
@@ -1758,7 +1769,9 @@
                 let typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
                 if (ch === hoveredLetter) {
                     typeClass += isHoveredInvalid ? ' hovered-invalid' : ' hovered-valid';
-                } else if (conflictColumns.has(colIdx)) {
+                } else if (ch === alreadyAssignedLetter) {
+                    typeClass += ' hovered-valid';
+                } else if (conflictColumns.has(colIdx) && alreadyAssignedLetter === null) {
                     typeClass += ' column-conflict';
                 }
                 
@@ -1791,7 +1804,9 @@
             let typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
             if (ch === hoveredLetter) {
                 typeClass += isHoveredInvalid ? ' hovered-invalid' : ' hovered-valid';
-            } else if (conflictColumns.has(colIdx)) {
+            } else if (ch === alreadyAssignedLetter) {
+                typeClass += ' hovered-valid';
+            } else if (conflictColumns.has(colIdx) && alreadyAssignedLetter === null) {
                 typeClass += ' column-conflict';
             }
             
@@ -1805,6 +1820,26 @@
         }
         html += '</div>';
         html += '</div>'; // close eq-visual
+
+        // Hover explanation box below the equation
+        let explanationHtml = '';
+        if (STATE.hoveredCell && STATE.hoveredCell.explanation) {
+            const exp = STATE.hoveredCell.explanation;
+            let icon = '💡';
+            if (exp.includes('🚫')) icon = '🚫';
+            else if (exp.includes('🎯') || exp.includes('✓')) icon = '✓';
+            
+            explanationHtml = `<div class="hover-explanation-box active" style="margin-top: 12px; margin-bottom: 0px; min-height: 48px;">
+                <span class="icon">${icon}</span>
+                <span class="text">${exp}</span>
+            </div>`;
+        } else {
+            explanationHtml = `<div class="hover-explanation-box" style="margin-top: 12px; margin-bottom: 0px; min-height: 48px; opacity: 0.5;">
+                <span class="icon">ℹ️</span>
+                <span class="text">Hover over any matrix cell to see reasoning here.</span>
+            </div>`;
+        }
+        html += explanationHtml;
 
         // Info bar (outside eq-visual to keep it pinned)
         html += '<div class="eq-info">';
@@ -2521,7 +2556,7 @@
         }
 
         if (letter && digit !== null) {
-            STATE.hoveredCell = { letter, digit: parseInt(digit), isInvalid };
+            STATE.hoveredCell = { letter, digit: parseInt(digit), isInvalid, explanation: htmlText };
             renderEquationDisplay();
         }
     }
