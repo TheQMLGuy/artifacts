@@ -70,44 +70,186 @@
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-1); }
 
         /* ===== APP LAYOUT ===== */
-        .app {
-            position: relative; z-index: 1;
-            max-width: 1400px; margin: 0 auto;
-            padding: 24px 28px 40px;
+        /* ===== Desktop Viewport-Height Layout ===== */
+        @media (min-width: 1025px) {
+            body {
+                height: 100vh;
+                overflow: hidden;
+            }
+            .app {
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                padding: 12px 24px 16px;
+                position: relative;
+                z-index: 1;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+            header {
+                flex-shrink: 0;
+                text-align: center;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--border);
+            }
+            header h1 {
+                font-size: 1.8rem;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+                background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 2px;
+            }
+            header p {
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+                font-weight: 400;
+            }
+            .input-panel {
+                flex-shrink: 0;
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 12px 20px;
+                margin-bottom: 16px;
+                backdrop-filter: blur(16px);
+            }
+            .main-content {
+                flex: 1;
+                display: grid;
+                grid-template-columns: 1fr 380px;
+                gap: 20px;
+                min-height: 0;
+                margin-bottom: 8px;
+            }
+            .left-panel {
+                display: flex;
+                flex-direction: row;
+                gap: 20px;
+                align-items: stretch;
+                min-height: 0;
+                flex: 1;
+            }
+            .equation-display {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 16px 20px;
+                backdrop-filter: blur(16px);
+                flex: 1;
+                min-width: 310px;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                overflow-y: auto;
+            }
+            .matrix-panel {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 16px 20px;
+                backdrop-filter: blur(16px);
+                overflow-x: auto;
+                flex: 1.7;
+                min-width: 440px;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                overflow-y: auto;
+            }
+            .reasoning-panel {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 16px;
+                backdrop-filter: blur(16px);
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                max-height: none;
+                position: static;
+            }
         }
 
-        /* ===== HEADER ===== */
-        header {
-            text-align: center;
-            margin-bottom: 32px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border);
-        }
-        header h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 6px;
-        }
-        header p {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            font-weight: 400;
+        /* ===== Tablet/Mobile/Scroll Fallback ===== */
+        @media (max-width: 1024px) {
+            .app {
+                position: relative; z-index: 1;
+                max-width: 1400px; margin: 0 auto;
+                padding: 16px 20px 32px;
+            }
+            header {
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid var(--border);
+            }
+            header h1 {
+                font-size: 2rem;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+                background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 4px;
+            }
+            header p {
+                font-size: 0.9rem;
+                color: var(--text-secondary);
+                font-weight: 400;
+            }
+            .input-panel {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 16px 20px;
+                margin-bottom: 20px;
+                backdrop-filter: blur(16px);
+            }
+            .main-content {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 20px;
+                align-items: start;
+            }
+            .left-panel {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .equation-display {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 20px;
+                backdrop-filter: blur(16px);
+            }
+            .matrix-panel {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 20px;
+                backdrop-filter: blur(16px);
+                overflow-x: auto;
+            }
+            .reasoning-panel {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 20px;
+                backdrop-filter: blur(16px);
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+                position: sticky;
+                top: 20px;
+            }
         }
 
-        /* ===== INPUT PANEL ===== */
-        .input-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px 24px;
-            margin-bottom: 24px;
-            backdrop-filter: blur(16px);
-        }
         .input-row {
             display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
         }
@@ -123,10 +265,10 @@
             background: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: var(--radius-xs);
-            padding: 10px 14px;
+            padding: 8px 12px;
             color: var(--text-primary);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
@@ -135,19 +277,19 @@
             border-color: var(--accent-1);
             box-shadow: 0 0 0 3px var(--glow-accent);
         }
-        .input-group input.eq-input { width: 380px; letter-spacing: 1px; }
+        .input-group input.eq-input { width: 340px; letter-spacing: 1px; }
         .input-group select { cursor: pointer; min-width: 70px; }
 
         .btn-group { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
 
         .btn {
-            padding: 10px 18px;
+            padding: 8px 14px;
             border: 1px solid var(--border);
             border-radius: var(--radius-xs);
             background: var(--bg-secondary);
             color: var(--text-primary);
             font-family: 'Inter', sans-serif;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -164,7 +306,7 @@
             color: #fff;
         }
         .btn-primary:hover {
-            box-shadow: 0 4px 20px var(--glow-accent);
+            box-shadow: 0 4px 16px var(--glow-accent);
             border-color: var(--accent-3);
         }
         .btn-success {
@@ -172,7 +314,7 @@
             border-color: var(--success);
             color: #fff;
         }
-        .btn-success:hover { box-shadow: 0 4px 20px var(--glow-success); }
+        .btn-success:hover { box-shadow: 0 4px 16px var(--glow-success); }
         .btn-danger {
             background: transparent; border-color: var(--error); color: var(--error);
         }
@@ -185,14 +327,14 @@
         }
 
         .examples-row {
-            display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px;
+            display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
         }
         .example-chip {
-            padding: 5px 12px;
+            padding: 4px 10px;
             background: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: 20px;
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             font-family: 'JetBrains Mono', monospace;
             font-weight: 500;
             color: var(--text-secondary);
@@ -272,6 +414,24 @@
         .eq-cell.eq-cell-derived {
             border: 1.5px solid rgba(163,113,247,0.4);
             box-shadow: 0 0 4px rgba(163,113,247,0.15);
+        }
+        .eq-cell.hovered-invalid {
+            border-color: var(--error) !important;
+            box-shadow: 0 0 12px var(--glow-error) !important;
+            background: rgba(244, 63, 94, 0.15) !important;
+            animation: pulse-border 1.5s infinite;
+        }
+        .eq-cell.hovered-invalid .digit-val {
+            color: var(--error) !important;
+        }
+        .eq-cell.column-conflict {
+            background: var(--error-dim) !important;
+            border-color: var(--error) !important;
+            box-shadow: inset 0 0 6px rgba(244, 63, 94, 0.2), 0 0 8px rgba(244, 63, 94, 0.1) !important;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: var(--error); box-shadow: 0 0 8px var(--glow-error); }
+            50% { border-color: #ff6b8b; box-shadow: 0 0 16px rgba(244, 63, 94, 0.6); }
         }
         .eq-cell .letter {
             font-size: 0.65rem; color: var(--text-muted);
@@ -1477,9 +1637,50 @@
         if (!STATE.parsed) { container.style.display = 'none'; return; }
         container.style.display = '';
 
-        const { operands, result, letters, leadingLetters } = STATE.parsed;
-        const assignment = STATE.solution || STATE.assignment;
+        const { operands, result, letters, leadingLetters, columns } = STATE.parsed;
+        
+        // Use normal assignments or solution
+        let assignment = { ...(STATE.solution || STATE.assignment) };
+        
+        let hoveredLetter = null;
+        let hoveredDigit = null;
+        let isHoveredInvalid = false;
+        
+        if (STATE.hoveredCell) {
+            hoveredLetter = STATE.hoveredCell.letter;
+            hoveredDigit = STATE.hoveredCell.digit;
+            isHoveredInvalid = STATE.hoveredCell.isInvalid;
+            assignment[hoveredLetter] = hoveredDigit;
+        }
+
         const maxLen = Math.max(result.length, ...operands.map(o => o.length));
+        
+        // Determine which columns are in conflict under the current assignment
+        const conflictColumns = new Set();
+        if (hoveredLetter !== null) {
+            let carryVal = 0;
+            for (let c = 0; c < columns.length; c++) {
+                const col = columns[c];
+                const colLetters = [...col.opLetters.filter(l => l), col.resLetter].filter(l => l);
+                const uniq = [...new Set(colLetters)];
+                
+                // Check if all variables in this column are now assigned and carry is known
+                if (uniq.every(l => l in assignment) && !isNaN(carryVal)) {
+                    const opSum = col.opLetters.reduce((s, l) => s + (l ? assignment[l] : 0), 0);
+                    const resVal = col.resLetter ? assignment[col.resLetter] : 0;
+                    const total = opSum + carryVal;
+                    
+                    if (total % STATE.base !== resVal) {
+                        conflictColumns.add(c);
+                        carryVal = NaN;
+                    } else {
+                        carryVal = Math.floor(total / STATE.base);
+                    }
+                } else {
+                    carryVal = NaN;
+                }
+            }
+        }
 
         let html = '<h3>Equation Visualization</h3><div class="eq-visual">';
 
@@ -1490,10 +1691,20 @@
             html += '<div class="eq-row">';
             html += `<span class="eq-operator">${i === 0 ? '' : '+'}</span>`;
             for (let p = 0; p < pad; p++) html += '<span class="eq-cell" style="visibility:hidden"></span>';
-            for (const ch of word) {
+            
+            for (let charIdx = 0; charIdx < word.length; charIdx++) {
+                const ch = word[charIdx];
+                const colIdx = word.length - 1 - charIdx;
                 const isAssigned = ch in assignment;
                 const isIndependent = STATE.classes && STATE.classes.independent.has(ch);
-                const typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
+                
+                let typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
+                if (ch === hoveredLetter) {
+                    typeClass += ' hovered-invalid';
+                } else if (conflictColumns.has(colIdx)) {
+                    typeClass += ' column-conflict';
+                }
+                
                 html += `<span class="eq-cell ${isAssigned ? 'assigned' : 'unassigned'} ${typeClass}">`;
                 if (isAssigned) {
                     html += `<span class="letter">${ch}</span><span class="digit-val">${assignment[ch]}</span>`;
@@ -1513,10 +1724,20 @@
         html += '<span class="eq-operator">=</span>';
         const resPad = maxLen - result.length;
         for (let p = 0; p < resPad; p++) html += '<span class="eq-cell" style="visibility:hidden"></span>';
-        for (const ch of result) {
+        
+        for (let charIdx = 0; charIdx < result.length; charIdx++) {
+            const ch = result[charIdx];
+            const colIdx = result.length - 1 - charIdx;
             const isAssigned = ch in assignment;
             const isIndependent = STATE.classes && STATE.classes.independent.has(ch);
-            const typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
+            
+            let typeClass = isIndependent ? 'eq-cell-independent' : 'eq-cell-derived';
+            if (ch === hoveredLetter) {
+                typeClass += ' hovered-invalid';
+            } else if (conflictColumns.has(colIdx)) {
+                typeClass += ' column-conflict';
+            }
+            
             html += `<span class="eq-cell ${isAssigned ? 'assigned' : 'unassigned'} ${typeClass}">`;
             if (isAssigned) {
                 html += `<span class="letter">${ch}</span><span class="digit-val">${assignment[ch]}</span>`;
@@ -1532,8 +1753,8 @@
         html += `<span class="eq-stat">Letters: <span>${letters.length}</span></span>`;
         html += `<span class="eq-stat">Base: <span>${STATE.base}</span></span>`;
         html += `<span class="eq-stat">Leading: <span>${[...leadingLetters].join(', ') || '—'}</span></span>`;
-        const assigned = Object.keys(assignment).length;
-        html += `<span class="eq-stat">Assigned: <span>${assigned}/${letters.length}</span></span>`;
+        const assignedCount = Object.keys(STATE.solution || STATE.assignment).length;
+        html += `<span class="eq-stat">Assigned: <span>${assignedCount}/${letters.length}</span></span>`;
         html += '</div>';
 
         html += '</div>';
@@ -1618,6 +1839,8 @@
                 }
 
                 rowHtml += `<div class="${cls}" 
+                    data-letter="${letter}"
+                    data-digit="${d}"
                     data-explanation="${escHtml(explanation)}"
                     onmouseenter="showHoverExplanation(this)" 
                     onmouseleave="clearHoverExplanation()" 
@@ -2220,6 +2443,10 @@
 
     function showHoverExplanation(cell) {
         const htmlText = cell.getAttribute('data-explanation');
+        const letter = cell.getAttribute('data-letter');
+        const digit = cell.getAttribute('data-digit');
+        const isInvalid = cell.classList.contains('disabled');
+
         const box = document.getElementById('hoverExplanationBox');
         if (box && htmlText) {
             box.classList.add('active');
@@ -2234,6 +2461,11 @@
                 iconSpan.textContent = '💡';
             }
         }
+
+        if (letter && digit !== null) {
+            STATE.hoveredCell = { letter, digit: parseInt(digit), isInvalid };
+            renderEquationDisplay();
+        }
     }
 
     function clearHoverExplanation() {
@@ -2243,6 +2475,9 @@
             box.querySelector('.icon').textContent = 'ℹ️';
             box.querySelector('.text').innerHTML = 'Hover over any cell in the matrix to view constraint propagation and assignment details.';
         }
+
+        STATE.hoveredCell = null;
+        renderEquationDisplay();
     }
 
     // ============================================================================
