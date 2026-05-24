@@ -311,7 +311,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 24px 24px 80px 24px; /* extra bottom padding to accommodate tooltips */
+            padding: 24px;
             backdrop-filter: blur(16px);
             overflow-x: auto;
             flex: 1.8;
@@ -449,28 +449,48 @@
             font-size: 0.9rem;
         }
 
-        /* tooltip */
-        .matrix-cell[data-tooltip]:hover::before {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: calc(100% + 8px); /* display below the box */
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 8px 12px;
-            background: #0f132e;
-            border: 1px solid var(--accent-1);
-            border-radius: var(--radius-xs);
-            font-size: 0.72rem;
-            font-weight: 500;
+        /* ===== HOVER EXPLANATION BOX ===== */
+        .hover-explanation-box {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: rgba(12, 16, 41, 0.6);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            min-height: 64px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+        .hover-explanation-box.active {
+            border-color: var(--accent-1);
+            background: rgba(99, 102, 241, 0.06);
             color: var(--text-primary);
-            white-space: normal;
-            width: max-content;
-            max-width: 240px;
-            z-index: 100;
-            pointer-events: none;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 10px rgba(99, 102, 241, 0.15);
-            text-align: center;
-            line-height: 1.4;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.1);
+        }
+        .hover-explanation-box .icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hover-explanation-box .text {
+            flex: 1;
+        }
+        .hover-explanation-box code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            background: rgba(0,0,0,0.3);
+            padding: 1px 5px;
+            border-radius: 3px;
+            color: var(--accent-3);
         }
 
         @keyframes solutionPop {
@@ -1571,30 +1591,37 @@
             for (let d = 0; d < base; d++) {
                 const key = `${letter}-${d}`;
                 let cls = 'matrix-cell';
-                let tooltip = '';
+                let explanation = '';
                 let clickable = false;
 
                 if (STATE.solution && STATE.solution[letter] === d) {
                     cls += ' solution';
-                    tooltip = `Solution: ${letter} = ${d}`;
+                    explanation = `🎯 <strong>Solution:</strong> Letter <code>${letter}</code> is assigned to <code>${d}</code>.`;
                 } else if (STATE.assignment[letter] === d) {
                     cls += ' assigned';
-                    tooltip = `Assigned: ${letter} = ${d} (click to unassign)`;
+                    explanation = `✓ <strong>Assigned:</strong> Letter <code>${letter}</code> is assigned to <code>${d}</code> (click to unassign).`;
                     clickable = mode === 'interactive';
                 } else if (letter in assignment) {
                     cls += ' disabled';
-                    tooltip = `Letter ${letter} is already assigned to digit ${assignment[letter]}.`;
+                    explanation = `🚫 <strong>Disabled:</strong> Letter <code>${letter}</code> is already assigned to digit <code>${assignment[letter]}</code>.`;
                 } else if (disabledMap[key]) {
                     cls += ' disabled';
-                    tooltip = disabledMap[key];
+                    explanation = `🚫 <strong>Eliminated:</strong> ${disabledMap[key]}`;
                 } else if (mode === 'interactive' && constraints && constraints.validDigits[letter] && !constraints.validDigits[letter].has(d)) {
                     cls += ' disabled';
-                    tooltip = 'Eliminated by constraints';
+                    explanation = `🚫 <strong>Eliminated:</strong> Removed by mathematical constraints.`;
+                } else if (mode === 'interactive' && !STATE.solution) {
+                    explanation = `💡 <strong>Available:</strong> Click to assign digit <code>${d}</code> to letter <code>${letter}</code>.`;
+                    clickable = true;
                 } else {
-                    clickable = mode === 'interactive' && !STATE.solution;
+                    explanation = `Letter <code>${letter}</code> and digit <code>${d}</code>.`;
                 }
 
-                rowHtml += `<div class="${cls}" ${tooltip ? `data-tooltip="${escHtml(tooltip)}"` : ''} ${clickable ? `onclick="handleCellClick('${letter}',${d})"` : ''}></div>`;
+                rowHtml += `<div class="${cls}" 
+                    data-explanation="${escHtml(explanation)}"
+                    onmouseenter="showHoverExplanation(this)" 
+                    onmouseleave="clearHoverExplanation()" 
+                    ${clickable ? `onclick="handleCellClick('${letter}',${d})"` : ''}></div>`;
             }
             return rowHtml;
         }
@@ -1618,6 +1645,12 @@
         }
 
         html += '</div>';
+
+        // Hover explanation box below the grid
+        html += `<div class="hover-explanation-box" id="hoverExplanationBox">
+            <span class="icon">ℹ️</span>
+            <span class="text">Hover over any cell in the matrix to view constraint propagation and assignment details.</span>
+        </div>`;
 
         // Status bar
         let statusDot = 'ready', statusText = 'Ready';
@@ -2183,6 +2216,33 @@
 
     function escHtml(str) {
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showHoverExplanation(cell) {
+        const htmlText = cell.getAttribute('data-explanation');
+        const box = document.getElementById('hoverExplanationBox');
+        if (box && htmlText) {
+            box.classList.add('active');
+            box.querySelector('.text').innerHTML = htmlText;
+            
+            const iconSpan = box.querySelector('.icon');
+            if (htmlText.includes('🚫')) {
+                iconSpan.textContent = '🚫';
+            } else if (htmlText.includes('🎯') || htmlText.includes('✓')) {
+                iconSpan.textContent = '✓';
+            } else {
+                iconSpan.textContent = '💡';
+            }
+        }
+    }
+
+    function clearHoverExplanation() {
+        const box = document.getElementById('hoverExplanationBox');
+        if (box) {
+            box.classList.remove('active');
+            box.querySelector('.icon').textContent = 'ℹ️';
+            box.querySelector('.text').innerHTML = 'Hover over any cell in the matrix to view constraint propagation and assignment details.';
+        }
     }
 
     // ============================================================================
