@@ -1978,12 +1978,6 @@
 
         html += '</div></div>'; // close matrix-grid and matrix-scroll-container
 
-        // Hover explanation box below the grid
-        html += `<div class="hover-explanation-box" id="hoverExplanationBox">
-            <span class="icon">ℹ️</span>
-            <span class="text">Hover over any cell in the matrix to view constraint propagation and assignment details.</span>
-        </div>`;
-
         // Status bar
         let statusDot = 'ready', statusText = 'Ready';
         if (STATE.solving) { statusDot = 'solving'; statusText = 'Solving...'; }
@@ -2556,21 +2550,6 @@
         const digit = cell.getAttribute('data-digit');
         const isInvalid = cell.classList.contains('disabled-assigned') || cell.classList.contains('disabled-math');
 
-        const box = document.getElementById('hoverExplanationBox');
-        if (box && htmlText) {
-            box.classList.add('active');
-            box.querySelector('.text').innerHTML = htmlText;
-            
-            const iconSpan = box.querySelector('.icon');
-            if (htmlText.includes('🚫')) {
-                iconSpan.textContent = '🚫';
-            } else if (htmlText.includes('🎯') || htmlText.includes('✓')) {
-                iconSpan.textContent = '✓';
-            } else {
-                iconSpan.textContent = '💡';
-            }
-        }
-
         if (letter && digit !== null) {
             STATE.hoveredCell = { letter, digit: parseInt(digit), isInvalid, explanation: htmlText };
             renderEquationDisplay();
@@ -2578,13 +2557,6 @@
     }
 
     function clearHoverExplanation() {
-        const box = document.getElementById('hoverExplanationBox');
-        if (box) {
-            box.classList.remove('active');
-            box.querySelector('.icon').textContent = 'ℹ️';
-            box.querySelector('.text').innerHTML = 'Hover over any cell in the matrix to view constraint propagation and assignment details.';
-        }
-
         STATE.hoveredCell = null;
         renderEquationDisplay();
     }
