@@ -398,7 +398,7 @@
             font-size: 0.85rem;
             font-weight: 600;
         }
-        .matrix-cell:hover:not(.disabled):not(.solution) {
+        .matrix-cell:hover:not(.disabled-assigned):not(.disabled-math):not(.solution) {
             border-color: var(--accent-1);
             background: rgba(99,102,241,0.08);
             transform: scale(1.08);
@@ -429,13 +429,25 @@
             font-size: 1rem;
             color: var(--success);
         }
-        .matrix-cell.disabled {
+        .matrix-cell.disabled-assigned {
+            background: rgba(245,158,11,0.04);
+            border-color: rgba(245,158,11,0.15);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .matrix-cell.disabled-assigned::after {
+            content: '—';
+            font-size: 0.75rem;
+            color: var(--warning);
+            opacity: 0.6;
+        }
+        .matrix-cell.disabled-math {
             background: rgba(244,63,94,0.04);
-            border-color: rgba(244,63,94,0.1);
+            border-color: rgba(244,63,94,0.12);
             cursor: not-allowed;
             opacity: 0.4;
         }
-        .matrix-cell.disabled::after {
+        .matrix-cell.disabled-math::after {
             content: '✗';
             font-size: 0.75rem;
             color: var(--error);
@@ -1916,13 +1928,17 @@
                     explanation = `✓ <strong>Assigned:</strong> Letter <code>${letter}</code> is assigned to <code>${d}</code> (click to unassign).`;
                     clickable = mode === 'interactive';
                 } else if (letter in assignment) {
-                    cls += ' disabled';
+                    cls += ' disabled-assigned';
                     explanation = `🚫 <strong>Disabled:</strong> Letter <code>${letter}</code> is already assigned to digit <code>${assignment[letter]}</code>.`;
                 } else if (disabledMap[key]) {
-                    cls += ' disabled';
+                    if (disabledMap[key].includes('already assigned')) {
+                        cls += ' disabled-assigned';
+                    } else {
+                        cls += ' disabled-math';
+                    }
                     explanation = `🚫 <strong>Eliminated:</strong> ${disabledMap[key]}`;
                 } else if (mode === 'interactive' && constraints && constraints.validDigits[letter] && !constraints.validDigits[letter].has(d)) {
-                    cls += ' disabled';
+                    cls += ' disabled-math';
                     explanation = `🚫 <strong>Eliminated:</strong> Removed by mathematical constraints.`;
                 } else if (mode === 'interactive' && !STATE.solution) {
                     explanation = `💡 <strong>Available:</strong> Click to assign digit <code>${d}</code> to letter <code>${letter}</code>.`;
@@ -2538,7 +2554,7 @@
         const htmlText = cell.getAttribute('data-explanation');
         const letter = cell.getAttribute('data-letter');
         const digit = cell.getAttribute('data-digit');
-        const isInvalid = cell.classList.contains('disabled');
+        const isInvalid = cell.classList.contains('disabled-assigned') || cell.classList.contains('disabled-math');
 
         const box = document.getElementById('hoverExplanationBox');
         if (box && htmlText) {
