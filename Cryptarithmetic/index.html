@@ -430,28 +430,30 @@
             color: var(--success);
         }
         .matrix-cell.disabled-assigned {
-            background: rgba(245, 158, 11, 0.06);
-            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.55);
+            box-shadow: inset 0 0 4px rgba(245, 158, 11, 0.15);
             cursor: not-allowed;
         }
         .matrix-cell.disabled-assigned::after {
             content: '—';
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--warning);
-            opacity: 0.75;
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #ff9f0a;
+            text-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
         }
         .matrix-cell.disabled-math {
-            background: rgba(244, 63, 94, 0.06);
-            border-color: rgba(244, 63, 94, 0.25);
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.5);
+            box-shadow: inset 0 0 4px rgba(244, 63, 94, 0.15);
             cursor: not-allowed;
         }
         .matrix-cell.disabled-math::after {
             content: '✗';
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--error);
-            opacity: 0.75;
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #ff453a;
+            text-shadow: 0 0 6px rgba(244, 63, 94, 0.8);
         }
         .matrix-cell.conflict {
             background: var(--error-dim);
